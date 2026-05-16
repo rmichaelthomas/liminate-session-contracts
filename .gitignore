@@ -4,3 +4,4 @@ session-contract.limn
 __pycache__/
 *.pyc
 results.jsonl
+results-*.jsonl

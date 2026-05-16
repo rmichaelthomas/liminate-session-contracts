@@ -42,7 +42,7 @@ import anthropic
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL_MD = (REPO_ROOT / "SKILL.md").read_text()
-TASKS = json.loads((Path(__file__).parent / "tasks.json").read_text())["tasks"]
+DEFAULT_TASKS_FILE = Path(__file__).parent / "tasks.json"
 
 BASELINE_SYSTEM = (
     "You are answering questions based on a provided source document. "
@@ -252,14 +252,16 @@ def main() -> None:
     parser.add_argument("--model", default="claude-opus-4-7")
     parser.add_argument("--runs", type=int, default=3, help="Runs per (task, condition)")
     parser.add_argument("--tasks", type=int, default=None, help="Limit number of tasks (for smoke testing)")
+    parser.add_argument("--tasks-file", default=str(DEFAULT_TASKS_FILE), help="Path to tasks JSON")
     parser.add_argument("--out", default=str(Path(__file__).parent / "results.jsonl"))
     args = parser.parse_args()
+    all_tasks = json.loads(Path(args.tasks_file).read_text())["tasks"]
 
     if "ANTHROPIC_API_KEY" not in os.environ:
         raise SystemExit("Set ANTHROPIC_API_KEY")
 
     client = anthropic.Anthropic()
-    tasks = TASKS[: args.tasks] if args.tasks else TASKS
+    tasks = all_tasks[: args.tasks] if args.tasks else all_tasks
     conditions = ["baseline", "skill"]
 
     total_calls = len(tasks) * args.runs * len(conditions)
