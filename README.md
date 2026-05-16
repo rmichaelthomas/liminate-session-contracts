@@ -1,33 +1,36 @@
 # session-contracts
 
-A cross-agent skill for keeping working sessions honest. Tracks what an LLM has *actually verified* versus what it is *inferring*, in a small inspectable `.limn` file that any teammate — human or model — can read.
+A skill that keeps a working session honest. It writes down what an LLM has actually read versus what it is guessing, in a small file anyone can open and check.
 
-## What session contracts are
+## What a session contract is
 
-A session contract is a structured note that lives alongside a working session. It records, in plain words:
+A session contract is a short note that travels with a working session. It records, in plain words:
 
-- whether the primary source has been read (`source-state`)
-- what backs the current claims (`claim-basis`)
-- which decisions have been locked and which questions remain open
-- reactive checks that warn when the agent is about to claim more than it has verified
+- whether the primary source has been read
+- what the current claims are based on
+- which decisions have been locked
+- which questions are still open
+- which checks should fire when the state is inconsistent
 
-The contract is written in [Liminate](https://github.com/rmichaelthomas/liminate), a prose-as-syntax language with a bounded 35-word vocabulary. That bound is the point: forcing the contract into a small vocabulary forces precision, makes it diff-able, and makes it executable.
+The note is written in [Liminate](https://github.com/rmichaelthomas/liminate), a language whose vocabulary is 35 English words. The bound is the point. A small vocabulary makes the note short, diff-able, and runnable against an interpreter.
 
-## Why this exists
+## Why it exists
 
-Across a cross-model inquiry, Claude, ChatGPT, and Gemini were independently asked what they would build for themselves to work better. All three converged on the same problem: **continuity of meaning across time, and inspectable reasoning**. Not memory of facts — a record of *what was actually verified*. Session contracts are the smallest useful artifact that addresses that.
+Three large language models — Claude, ChatGPT, and Gemini — were each asked, separately, what they would build for themselves. They each named the same problem: keep meaning steady across time, and make the reasoning legible. Not memory of facts. A record of what was actually verified.
 
-The full design — three-layer architecture, four-phase roadmap, and the cross-model convergence analysis — lives in the [Liminate repository](https://github.com/rmichaelthomas/liminate).
+A session contract is the smallest useful thing that does that.
 
-## Installation
+The longer write-up — three-layer architecture, four-phase roadmap, the cross-model convergence — lives in the [Liminate repository](https://github.com/rmichaelthomas/liminate).
 
-This skill follows the [agentskills.io](https://agentskills.io) SKILL.md standard and works across any compliant agent (Claude Code, Codex CLI, Gemini CLI, GitHub Copilot, Cursor, and others).
+## Install
+
+This skill follows the [agentskills.io](https://agentskills.io) SKILL.md standard. Any compliant agent can load it.
 
 ```bash
-# Claude Code — personal (all projects)
+# Claude Code — all projects
 git clone https://github.com/rmichaelthomas/session-contracts.git ~/.claude/skills/session-contracts
 
-# Claude Code — project (this repo only)
+# Claude Code — one project
 git clone https://github.com/rmichaelthomas/session-contracts.git .claude/skills/session-contracts
 
 # Codex CLI
@@ -36,49 +39,62 @@ git clone https://github.com/rmichaelthomas/session-contracts.git ~/.codex/skill
 # Gemini CLI
 git clone https://github.com/rmichaelthomas/session-contracts.git ~/.gemini/skills/session-contracts
 
-# Universal (any SKILL.md-compatible agent)
+# Any SKILL.md-compatible agent
 git clone https://github.com/rmichaelthomas/session-contracts.git .agents/skills/session-contracts
 ```
 
-Optional but recommended — install the Liminate interpreter so contracts can be validated:
+The Liminate interpreter is optional. Install it if you want the agent to check the contract as it writes:
 
 ```bash
 pip install liminate
 liminate path/to/session-contract.limn
 ```
 
-The skill operates at four tiers and degrades gracefully — it works as in-conversation state even with no file tools or interpreter available. See `SKILL.md` for the full tier table.
+## Use
 
-## Usage
-
-Start a contract at the beginning of a working session:
+Ask the agent to start a contract at the beginning of a session:
 
 > "Start a session contract for this design review."
 
-The agent will copy `references/session_contract_template.limn` to a working location and tailor it to the session. As the session proceeds, the agent updates the contract — appending decisions to `tracked-decisions`, recording open questions, and flipping `source-state` from `unscanned` to `scanned` to `verified` as sources are actually read.
+The agent copies the template, names the variables for the session at hand, and updates the file as the session moves:
 
-Before any consequential claim, the agent checks the contract. If `claim-basis` is `inference` and `source-state` is not `verified`, the agent says so before making the claim.
+- new decisions get appended to `tracked-decisions`
+- new questions get appended to `open-questions`
+- `source-state` flips from `unscanned` to `scanned` to `verified` as sources are actually read
 
-At the end of the session, the contract is yours — a small `.limn` file you can commit, diff, or hand to another agent.
+Before any consequential claim, the agent checks the contract. If the claim is inferred and the source is not verified, the agent says so before stating the claim.
 
-## What is Liminate?
+At the end of the session, the `.limn` file is yours. Save it, diff it, hand it to another agent.
 
-[Liminate](https://github.com/rmichaelthomas/liminate) is a programming language whose syntax is English prose, bounded to 35 reserved words. A program reads like a sentence; a sentence runs like a program. The bounded vocabulary makes programs deterministic, diff-able across versions, and legible to non-programmers.
+## Tiers
+
+The skill runs at whatever tier the host supports. It does not fail at lower tiers.
+
+| Tier | Available | Behavior |
+|------|-----------|----------|
+| 1 | Conversation only | Hold the contract in the chat. Render it on request. |
+| 2 | File tools | Write the contract to disk. Update it in place. |
+| 3 | Liminate installed | Run the file through the interpreter after each update. Fix parse errors. |
+| 4 | Persistent storage | Keep contracts across sessions so prior decisions inform later ones. |
+
+## About Liminate
+
+[Liminate](https://github.com/rmichaelthomas/liminate) is a programming language whose syntax is English prose, bounded to 35 reserved words. A sentence reads like English and runs like a program.
 
 - Repo: <https://github.com/rmichaelthomas/liminate>
 - PyPI: <https://pypi.org/project/liminate/>
-- Vocabulary reference: [`references/vocabulary_quick_reference.md`](references/vocabulary_quick_reference.md)
+- Vocabulary: [`references/vocabulary_quick_reference.md`](references/vocabulary_quick_reference.md)
 
-Session contracts use Liminate's `.limn` format. The interpreter is **optional** — contracts are readable prose even without it — but installing Liminate lets the agent validate the contract as it writes.
+A session contract is not a Liminate-only artifact — the file is plain prose either way. But running the interpreter against it catches typos and stale references before they spread.
 
-## The four-phase roadmap
+## Roadmap
 
-| Phase | Status | Description |
-|-------|--------|-------------|
-| 1. This skill | shipped | Session contracts as a portable SKILL.md, working at four tiers. |
-| 2. Session pack | specified | Extended vocabulary for reasoning state (`claim`, `source`, `decision`, `drift`, `verify`). See `references/session_pack.json`. |
-| 3. Institutional memory | planned | Organizations encoding operational knowledge as live `.limn` programs. |
-| 4. Semantic continuity runtime | planned | Addressable concepts, semantic versioning, queryable relationships. |
+| Phase | Status | What |
+|-------|--------|------|
+| 1 | shipped | This skill. Session contracts as a portable SKILL.md, running at four tiers. |
+| 2 | specified | A session pack that adds `claim`, `source`, `decision`, `drift`, and `verify` to the vocabulary. See `references/session_pack.json`. |
+| 3 | planned | Organizations writing operational knowledge as live `.limn` programs. |
+| 4 | planned | A runtime where concepts are addressable, versions are semantic, and relationships are queryable. |
 
 ## License
 
