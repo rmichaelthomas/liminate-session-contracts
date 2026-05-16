@@ -1,4 +1,5 @@
 .claude/
 .DS_Store
+session-contract.limn
 __pycache__/
 *.pyc
