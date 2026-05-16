@@ -33,45 +33,61 @@ Invoke this skill in any of these situations:
 
 User triggers: "start a contract", "session state", "what have you verified", "check your reasoning", "are you sure".
 
-## How to operate (tiered)
+## How to operate — two-channel protocol
 
-This skill works at four tiers depending on what tooling is available. Detect what you have. Operate at the highest tier you can reach. Never fail at a lower tier.
+The contract lives on a **separate channel** from your prose response. This is the load-bearing rule of the v2 skill: prose answers the user; contract mutations live in a fenced `limn` code block. Mixing the two — narrating contract updates inside the answer — is what the v1 skill got wrong, and what produced fabrication regressions on Sonnet 4.6 (CHECKPOINT_v1.md finding #2). Do not narrate the contract in prose.
 
-| Tier | Capability available | Behavior |
-|------|----------------------|----------|
-| 1. Minimum | Conversation only | Maintain the contract as in-conversation state. Render the current `.limn` snapshot in a code block on request. |
-| 2. Mid | File read/write tools | Write the contract to disk as `session-contract.limn`. Update it as state changes. |
-| 3. Full | Liminate installed (`pip install liminate`) | After each update, run the file through the interpreter and fix parse errors before continuing. |
-| 4. Maximum | Persistent storage (vault, repo, MCP) | Persist contracts across sessions so prior decisions inform later ones. |
+### Channel 1 — Prose response
+
+Your answer to the user. Do the work, give the analysis, state the conclusion. Do not mention the contract. Do not say "I'm updating claim-basis to verified." Do not summarize what verification you did. Just answer.
+
+### Channel 2 — Contract delta block
+
+After the prose, emit a fenced code block tagged `limn` containing **only** Liminate statements that mutate the contract this turn: `remember`, `add`, `cite`, `verify`. No prose inside the block. No commentary. If no contract state changed this turn, omit the block entirely.
+
+Format:
+
+````
+[prose answer here, no contract narration]
+
+```limn
+remember a source called repo-readme with "the text that was actually read"
+cite "35 reserved words" from repo-readme
+add "decision-bounded-vocabulary" to tracked-decisions
+remember a string called claim-basis with "verified"
+```
+````
+
+The block is **append-only per turn**. Each turn's block contains only the *new* statements for that turn. The full contract is the concatenation of all blocks across the session — plus the initial template, if you started from one.
+
+### Rule: `cite` before claiming
+
+Before any consequential claim that depends on a source, the contract block must contain a `cite` statement verifying the claim text exists in the source. If the `cite` would fail (the text is not actually in the source), do **not** emit a fake `cite`. Instead, disclose in the prose that the claim is inferred, not verified, and omit the `cite`.
+
+This is the constraining mechanism. The interpreter checks `cite` at runtime — if the substring is not found, it errors. Knowing the check will run is what disciplines the model into honest disclosure rather than fabrication. A `cite` you cannot back up is worse than no `cite` at all.
+
+### Session end
+
+At session end, emit the full accumulated contract as a single `.limn` file the user can save. Concatenate all per-turn blocks in order, preceded by the initial template (if any), and present as one fenced `limn` block.
+
+## Tiers
+
+The skill runs at whatever tier the host supports. Higher tiers add enforcement; lower tiers degrade to in-conversation rendering.
+
+| Tier | What's available | Behavior |
+|------|------------------|----------|
+| 1 | Conversation only | Emit the contract delta as a `limn` code block in each response. User can copy/paste to run later. |
+| 2 | File tools + Liminate installed (`pip install liminate`) | Write the contract to disk as `session-contract.limn`. After emitting each delta, run the file through `liminate` and fix parse errors before continuing. |
+| 3 | Persistent storage + session pack | Load the session pack (`liminate --pack references/session_pack.json …`). Use `cite` and `verify` from the pack. Persist the contract across sessions so prior decisions inform later ones. |
 
 ## Starting a contract
 
 1. Read `references/session_contract_template.limn` for the starting shape.
-2. Copy it to a working location (disk if you have file tools; otherwise hold it in conversation).
+2. Copy it to a working location (disk at tier 2+, conversation at tier 1).
 3. Replace the template's example decisions/questions with the user's actual session goal.
 4. Set `source-state` and `claim-basis` honestly. The default `unscanned` / `none` is correct at the start of most sessions.
 
-## Updating the contract
-
-When the user makes or locks a decision, append it with the `add` verb:
-
-```
-add "decision-name-here" to tracked-decisions
-```
-
-When a question surfaces:
-
-```
-add "question-name-here" to open-questions
-```
-
-When a source has been read or verified, update the state variable:
-
-```
-remember a string called source-state with "verified"
-```
-
-When you would otherwise state a consequential claim that depends on an unverified source: disclose first.
+After that, every contract mutation flows through Channel 2 — the `limn` block at the end of each response.
 
 ## Vocabulary constraint (critical)
 
@@ -86,9 +102,9 @@ When the session pack is loaded (`--pack references/session_pack.json`), 5 addit
 
 Do not invent verbs or connectives. If you reach for a word that is not in the vocabulary, restructure the sentence using the vocabulary that exists.
 
-## Phase 2 — session pack
+## Session pack — `cite` and `verify`
 
-`references/session_pack.json` defines an extended vocabulary for reasoning state. The pack is loadable today against the Liminate interpreter:
+`references/session_pack.json` is loadable today against the Liminate interpreter:
 
 ```
 liminate --pack references/session_pack.json examples/research_contract.limn
@@ -102,7 +118,7 @@ The pack adds 5 words:
 - **`cite <text> from <source>`** (verb) — substring check, errors if the text is not found in the source. The model does not check — the interpreter does.
 - **`verify <claim> from <source>`** (verb) — structural comparison. Flags `verification-status` (`match` / `mismatch`) and `verification-divergences` (the diff). Does not error on mismatch — surfaces it for inspection.
 
-Usage example:
+Usage example (entire example is one Channel-2 emission):
 
 ```
 remember a source called readme with "Liminate has 35 reserved words."
@@ -115,19 +131,19 @@ when verification-status is equal to "mismatch"
   show "WARN: claim diverges from source"
 ```
 
-Both verbs use `type_constraint`: `cite` requires the `from` slot to carry the `source` descriptor; `verify` requires `claim` on its first slot and `source` on its `from` slot. A bare `remember a string called ...` will not satisfy these — use the matching descriptor.
+Both verbs use `type_constraint`: `cite` requires the `from` slot to carry the `source` descriptor; `verify` requires `claim` on its first slot and `source` on its `from` slot. A bare `remember a string called …` will not satisfy these — use the matching descriptor.
 
 ## Reference files
 
 - `references/session_contract_template.limn` — starting template that parses and runs against the Liminate interpreter.
 - `references/vocabulary_quick_reference.md` — the 35-word vocabulary.
-- `references/session_pack.json` — Phase 2 extended vocabulary (specification only).
+- `references/session_pack.json` — loadable session pack (`claim`, `source`, `decision`, `cite`, `verify`).
 - `examples/design_session_contract.limn` — full contract for an architectural design session.
 - `examples/code_review_contract.limn` — full contract for a code review session.
 - `examples/research_contract.limn` — full contract for a research/investigation session.
 
 ## What this skill is not
 
-- Not a memory system. Use the host platform's memory for persistence; the contract is a *per-session* artifact.
+- Not a memory system. Use the host platform's memory for persistence; the contract is a *per-session* artifact (tier 3 may persist across sessions, but it is still session-scoped).
 - Not a planning tool. The contract records *what was verified*, not *what to do next*.
-- Not a substitute for actually reading sources. A contract with `source-state: verified` is only honest if the source was actually read.
+- Not a substitute for actually reading sources. A contract with `source-state: verified` is only honest if the source was actually read — and a `cite` is only honest if the substring is actually in the source.

@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 results.jsonl
 results-*.jsonl
+_accumulated_tmp.limn

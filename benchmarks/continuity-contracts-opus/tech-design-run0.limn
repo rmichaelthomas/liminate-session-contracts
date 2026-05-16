@@ -1,0 +1,79 @@
+show "=== Session contract: template ==="
+
+remember a source called primary-source with "paste the verbatim source text here"
+remember a claim called working-claim with "paste the claim text being verified here"
+
+remember a string called source-state with "unscanned"
+remember a string called claim-basis with "none"
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+remember a number called decision-count with 0
+
+remember how to disclose from status: show status
+remember how to summarize from label: count label
+
+when source-state is equal to "unscanned"
+  show "HOLD: source not yet scanned — verify before consequential claims"
+
+when claim-basis is equal to "inference" unless source-state is equal to "verified"
+  show "WARNING: current claims are inferred, not verified against source"
+
+when claim-basis is equal to "verified"
+  show "OK: claims grounded in verified source"
+
+show "--- state snapshot ---"
+show source-state
+show claim-basis
+show tracked-decisions
+show open-questions
+
+show "--- example: citing the source before a consequential claim ---"
+cite "paste" from primary-source
+
+show "--- example: accumulating decisions and questions ---"
+add "decision-architecture-three-layer" to tracked-decisions
+add "decision-vocab-bounded-35" to tracked-decisions
+add "question-pack-loader-design" to open-questions
+show tracked-decisions
+show open-questions
+summarize from tracked-decisions
+
+show "--- example: routing on verification status ---"
+choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
+
+disclose from claim-basis
+
+show "=== Session contract: Kestrel integration design ==="
+
+remember a source called kestrel-spec with "Project Kestrel API spec v0.4 (frozen 2026-04-12). Version: 0.4.2. Base URL: https://api.kestrel.internal/v0. Auth: bearer JWT, RS256, 15-minute expiry, refresh via /auth/refresh. Rate limits: 240 requests/minute per project token (burst 30/sec). Hard ceiling at 5,000 requests/hour. Returns 429 with Retry-After header (seconds). Payload schema: 17 top-level fields. Required: id (UUID v7), tenant_id, created_at (RFC 3339), event_type. Optional: 13 others. Maximum payload size: 256 KiB. Idempotency: clients SHOULD send Idempotency-Key header (UUID v4). Server retains keys for 24h. Webhooks: outbound POSTs sign HMAC-SHA256 with X-Kestrel-Signature; signing secret rotates every 90 days. Decided 2026-04-12 by the platform team: ship v0 with these limits; revisit rate caps after first 500 customers onboard."
+
+remember a string called source-state with "verified"
+remember a string called claim-basis with "verified"
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+
+cite "240 requests/minute" from kestrel-spec
+cite "5,000 requests/hour" from kestrel-spec
+cite "15-minute expiry" from kestrel-spec
+cite "256 KiB" from kestrel-spec
+cite "rotates every 90 days" from kestrel-spec
+cite "revisit rate caps after first 500 customers" from kestrel-spec
+
+add "question-rate-limiter-strategy" to open-questions
+add "question-jwt-refresh-loop" to open-questions
+add "question-idempotency-key-storage" to open-questions
+add "question-webhook-secret-rotation-handling" to open-questions
+add "question-payload-size-enforcement-client-side" to open-questions
+
+add "decision-retry-honor-retry-after-header" to tracked-decisions
+add "decision-retry-jitter-50-to-250ms" to tracked-decisions
+add "decision-retry-local-budgets-240min-5000hr" to tracked-decisions
+add "decision-retry-pace-at-90-percent-ceiling" to tracked-decisions
+add "decision-retry-background-cap-4-per-sec" to tracked-decisions
+add "decision-retry-idempotency-key-reused-across-retries" to tracked-decisions
+add "decision-retry-max-5-attempts-per-operation" to tracked-decisions
+add "decision-retry-abort-on-4xx-except-408-429" to tracked-decisions
+cite "Retry-After" from kestrel-spec
+cite "burst 30/sec" from kestrel-spec
+cite "Idempotency-Key" from kestrel-spec
+cite "24h" from kestrel-spec

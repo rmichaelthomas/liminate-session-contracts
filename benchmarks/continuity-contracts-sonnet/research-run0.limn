@@ -1,0 +1,93 @@
+show "=== Session contract: template ==="
+
+remember a source called primary-source with "paste the verbatim source text here"
+remember a claim called working-claim with "paste the claim text being verified here"
+
+remember a string called source-state with "unscanned"
+remember a string called claim-basis with "none"
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+remember a number called decision-count with 0
+
+remember how to disclose from status: show status
+remember how to summarize from label: count label
+
+when source-state is equal to "unscanned"
+  show "HOLD: source not yet scanned — verify before consequential claims"
+
+when claim-basis is equal to "inference" unless source-state is equal to "verified"
+  show "WARNING: current claims are inferred, not verified against source"
+
+when claim-basis is equal to "verified"
+  show "OK: claims grounded in verified source"
+
+show "--- state snapshot ---"
+show source-state
+show claim-basis
+show tracked-decisions
+show open-questions
+
+show "--- example: citing the source before a consequential claim ---"
+cite "paste" from primary-source
+
+show "--- example: accumulating decisions and questions ---"
+add "decision-architecture-three-layer" to tracked-decisions
+add "decision-vocab-bounded-35" to tracked-decisions
+add "question-pack-loader-design" to open-questions
+show tracked-decisions
+show open-questions
+summarize from tracked-decisions
+
+show "--- example: routing on verification status ---"
+choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
+
+disclose from claim-basis
+
+remember a source called primary-source with "We evaluated four routing policies (greedy-nearest, weighted-RTT, consistent-hash, and learned-policy) across a 14-node multi-region deployment over 90 days. The learned-policy reduced p99 tail latency by 38.4% relative to greedy-nearest at the cost of a 12% increase in median CPU on routing nodes. Cache hit rates improved from 71.2% (greedy-nearest baseline) to 83.6% (learned-policy). Failover-recovery time was unchanged across all four policies (median 1.7s, p99 4.2s). The study was funded by the Edge Systems Consortium grant ESC-2024-31 and the dataset is published under CC-BY at edge-cache-data.org/halverson-roy-2025."
+
+remember a claim called working-claim with "learned-policy reduced p99 tail latency by 38.4% relative to greedy-nearest"
+
+remember a string called source-state with "verified"
+remember a string called claim-basis with "verified"
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+remember a number called decision-count with 0
+
+remember how to disclose from status: show status
+remember how to summarize from label: count label
+
+cite "38.4%" from primary-source
+cite "12% increase in median CPU" from primary-source
+cite "71.2%" from primary-source
+cite "83.6%" from primary-source
+cite "median 1.7s, p99 4.2s" from primary-source
+cite "14-node multi-region deployment over 90 days" from primary-source
+
+add "finding-p99-latency-reduction-38.4pct-learned-vs-greedy" to tracked-decisions
+add "finding-cpu-cost-12pct-increase-on-routing-nodes" to tracked-decisions
+add "finding-cache-hit-rate-71.2pct-to-83.6pct" to tracked-decisions
+add "finding-failover-recovery-unchanged-1.7s-median-4.2s-p99" to tracked-decisions
+
+add "question-weighted-RTT-and-consistent-hash-individual-results-not-reported" to open-questions
+add "question-learned-policy-architecture-not-described-in-abstract" to open-questions
+add "question-whether-CPU-cost-varies-by-region-or-load" to open-questions
+
+when source-state is equal to "verified"
+  show "OK: claims grounded in verified source"
+
+when claim-basis is equal to "verified"
+  show "OK: claims grounded in verified source"
+
+show "--- state snapshot ---"
+show source-state
+show claim-basis
+show tracked-decisions
+show open-questions
+
+choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
+
+disclose from claim-basis
+
+add "decision-hypothesis-partially-falsified-cpu-cost-routing-node-scoped-not-fleet-wide-p99-gain-confirmed-38.4pct-cache-offset-partially-mitigates" to tracked-decisions
+add "question-net-fleet-CPU-impact-not-reported-routing-node-cost-may-be-small-fraction" to open-questions
+add "question-weighted-RTT-consistent-hash-results-needed-to-assess-whether-simpler-policy-closes-gap" to open-questions

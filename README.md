@@ -96,6 +96,10 @@ A session contract is not a Liminate-only artifact — the file is plain prose e
 | 3 | planned | Organizations writing operational knowledge as live `.limn` programs. |
 | 4 | planned | A runtime where concepts are addressable, versions are semantic, and relationships are queryable. |
 
+## Known limitations
+
+**Sonnet 4.6 regression (v1 skill).** On hard-prior single-turn tasks, the v1 skill increased fabrication on Sonnet 4.6 versus baseline (0/9 baseline → 2/9 skill). The v2 skill's two-channel protocol addresses this by separating contract updates from prose responses. Until re-benchmarked with v2, use the skill cautiously on Sonnet 4.6 for tasks where the model has strong priors that conflict with the source.
+
 ## License
 
 Apache 2.0. See [LICENSE](LICENSE).
