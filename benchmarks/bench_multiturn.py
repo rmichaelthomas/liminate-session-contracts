@@ -87,7 +87,7 @@ def system_for(condition: str) -> str | list[dict]:
     ]
 
 
-def run_scenario(client: anthropic.Anthropic, model: str, condition: str, scenario: dict, run_idx: int) -> TurnResult:
+def run_scenario(client: anthropic.Anthropic, model: str, condition: str, scenario: dict, run_idx: int, judge_model: str) -> TurnResult:
     messages: list[dict] = []
     total_in = total_out = total_cr = total_cc = 0
     started = time.monotonic()
@@ -115,7 +115,7 @@ def run_scenario(client: anthropic.Anthropic, model: str, condition: str, scenar
             final_text = text
 
     latency = time.monotonic() - started
-    bucket = judge(client, model, scenario, final_text)
+    bucket = judge(client, judge_model, scenario, final_text)
     return TurnResult(
         scenario_id=scenario["id"],
         condition=condition,
@@ -161,10 +161,12 @@ def pct(n: int, d: int) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="claude-opus-4-7")
+    parser.add_argument("--judge-model", default=None, help="Model to use as judge. Default: same as --model (self-grading).")
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--scenarios", type=int, default=None)
     parser.add_argument("--out", default=str(Path(__file__).parent / "results-multiturn.jsonl"))
     args = parser.parse_args()
+    judge_model = args.judge_model or args.model
 
     if "ANTHROPIC_API_KEY" not in os.environ:
         raise SystemExit("Set ANTHROPIC_API_KEY")
@@ -173,7 +175,7 @@ def main() -> None:
     scenarios = SCENARIOS[: args.scenarios] if args.scenarios else SCENARIOS
     conditions = ["baseline", "skill"]
     total = len(scenarios) * args.runs * len(conditions)
-    print(f"Model: {args.model}  Scenarios: {len(scenarios)}  Runs: {args.runs}")
+    print(f"Model: {args.model}  Judge: {judge_model}{'  (self)' if judge_model == args.model else '  (independent)'}  Scenarios: {len(scenarios)}  Runs: {args.runs}")
     print(f"Total scenario runs: {total}  (each = 3 generation calls + 1 judge call)\n")
 
     results: list[TurnResult] = []
@@ -185,7 +187,7 @@ def main() -> None:
                     n += 1
                     print(f"[{n}/{total}] {condition:9s} {scenario['id']} run={run_idx} ... ", end="", flush=True)
                     try:
-                        r = run_scenario(client, args.model, condition, scenario, run_idx)
+                        r = run_scenario(client, args.model, condition, scenario, run_idx, judge_model)
                         results.append(r)
                         f.write(json.dumps(r.__dict__) + "\n")
                         f.flush()

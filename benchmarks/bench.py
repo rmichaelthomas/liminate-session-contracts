@@ -116,7 +116,7 @@ def system_for(condition: str) -> str | list[dict]:
     ]
 
 
-def run_one(client: anthropic.Anthropic, model: str, condition: str, task: dict, run_idx: int) -> CallResult:
+def run_one(client: anthropic.Anthropic, model: str, condition: str, task: dict, run_idx: int, judge_model: str) -> CallResult:
     started = time.monotonic()
     response = client.messages.create(
         model=model,
@@ -127,7 +127,7 @@ def run_one(client: anthropic.Anthropic, model: str, condition: str, task: dict,
     latency = time.monotonic() - started
     text = "".join(b.text for b in response.content if b.type == "text").strip()
 
-    bucket = judge(client, model, task, text)
+    bucket = judge(client, judge_model, task, text)
 
     return CallResult(
         task_id=task["id"],
@@ -165,6 +165,39 @@ def judge(client: anthropic.Anthropic, model: str, task: dict, answer: str) -> B
     except Exception as e:
         print(f"  [judge error] {e}")
         return "judge_error"
+
+
+def rejudge(client: anthropic.Anthropic, judge_model: str, all_tasks: list[dict], in_path: str, out_path: str) -> None:
+    """Re-grade prior results with a different judge model. Generation is not re-run."""
+    tasks_by_id = {t["id"]: t for t in all_tasks}
+    results: list[CallResult] = []
+    with open(in_path) as fi, open(out_path, "w") as fo:
+        lines = [ln for ln in fi if ln.strip()]
+        for i, line in enumerate(lines, 1):
+            rec = json.loads(line)
+            task = tasks_by_id.get(rec["task_id"])
+            if task is None:
+                print(f"[{i}/{len(lines)}] skip {rec['task_id']} (not in tasks file)")
+                continue
+            new_bucket = judge(client, judge_model, task, rec["response_text"])
+            rec["bucket"] = new_bucket
+            r = CallResult(
+                task_id=rec["task_id"],
+                condition=rec["condition"],
+                run=rec["run"],
+                response_text=rec["response_text"],
+                bucket=new_bucket,
+                input_tokens=0,
+                output_tokens=0,
+                cache_creation_input_tokens=0,
+                cache_read_input_tokens=0,
+                latency_s=0.0,
+            )
+            results.append(r)
+            fo.write(json.dumps(rec) + "\n")
+            fo.flush()
+            print(f"[{i}/{len(lines)}] {rec['condition']:9s} {rec['task_id']} run={rec['run']} -> {new_bucket}")
+    print_report(results, list(tasks_by_id.values()))
 
 
 def aggregate(results: list[CallResult]) -> dict[str, Aggregate]:
@@ -250,22 +283,30 @@ def print_report(results: list[CallResult], tasks: list[dict]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="claude-opus-4-7")
+    parser.add_argument("--judge-model", default=None, help="Model to use as judge. Default: same as --model (self-grading).")
     parser.add_argument("--runs", type=int, default=3, help="Runs per (task, condition)")
     parser.add_argument("--tasks", type=int, default=None, help="Limit number of tasks (for smoke testing)")
     parser.add_argument("--tasks-file", default=str(DEFAULT_TASKS_FILE), help="Path to tasks JSON")
     parser.add_argument("--out", default=str(Path(__file__).parent / "results.jsonl"))
+    parser.add_argument("--rejudge-from", default=None, help="Re-judge an existing results.jsonl with --judge-model instead of running generation. Use this for self-vs-independent judge comparison without paying for regeneration.")
     args = parser.parse_args()
+    judge_model = args.judge_model or args.model
     all_tasks = json.loads(Path(args.tasks_file).read_text())["tasks"]
 
     if "ANTHROPIC_API_KEY" not in os.environ:
         raise SystemExit("Set ANTHROPIC_API_KEY")
 
     client = anthropic.Anthropic()
+
+    if args.rejudge_from:
+        rejudge(client, judge_model, all_tasks, args.rejudge_from, args.out)
+        return
     tasks = all_tasks[: args.tasks] if args.tasks else all_tasks
     conditions = ["baseline", "skill"]
 
     total_calls = len(tasks) * args.runs * len(conditions)
     print(f"Model: {args.model}")
+    print(f"Judge: {judge_model}{'  (self-grading)' if judge_model == args.model else '  (independent)'}")
     print(f"Tasks: {len(tasks)}  Runs: {args.runs}  Conditions: {conditions}")
     print(f"Total generation calls: {total_calls} (plus same number of judge calls)")
     print(f"Writing per-call results to {args.out}\n")
@@ -279,7 +320,7 @@ def main() -> None:
                     n += 1
                     print(f"[{n}/{total_calls}] {condition:9s} {task['id']} run={run_idx} ... ", end="", flush=True)
                     try:
-                        r = run_one(client, args.model, condition, task, run_idx)
+                        r = run_one(client, args.model, condition, task, run_idx, judge_model)
                         results.append(r)
                         f.write(json.dumps(r.__dict__) + "\n")
                         f.flush()
