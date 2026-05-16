@@ -1,0 +1,44 @@
+show "=== Research session contract ==="
+
+remember a string called source-state with "scanned"
+remember a string called claim-basis with "document"
+remember a string called cross-reference-status with "partial"
+remember a list called sources-consulted with "none"
+remember a list called claims-recorded with "none"
+remember a list called claims-cross-referenced with "none"
+remember a number called source-count with 0
+
+remember how to cite from source: show source
+
+when source-state is equal to "unscanned"
+  show "HOLD: source not yet read — cannot cite it"
+
+when claim-basis is equal to "inference" unless source-state is equal to "verified"
+  show "WARNING: claim is inferred, not grounded in a verified source"
+
+when cross-reference-status is equal to "complete"
+  show "OK: all claims cross-referenced across sources"
+
+show "--- sources consulted ---"
+add "source-inception-checkpoint" to sources-consulted
+add "source-add-verb-addendum" to sources-consulted
+add "source-build-checkpoint" to sources-consulted
+show sources-consulted
+count sources-consulted
+
+show "--- claims recorded ---"
+add "claim-cross-model-convergence" to claims-recorded
+add "claim-bounded-vocab-forces-precision" to claims-recorded
+add "claim-tiered-operation-pattern" to claims-recorded
+
+show "--- only multi-source claims advance ---"
+add "claim-cross-model-convergence" to claims-cross-referenced
+add "claim-bounded-vocab-forces-precision" to claims-cross-referenced
+
+show claims-recorded
+show claims-cross-referenced
+
+show "--- routing on cross-reference completeness ---"
+choose if cross-reference-status is equal to "complete": show "publish the synthesis" otherwise show "more cross-checking needed"
+
+cite from claim-basis

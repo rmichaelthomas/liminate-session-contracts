@@ -1,0 +1,40 @@
+show "=== Design session contract ==="
+
+remember a string called source-state with "scanned"
+remember a string called claim-basis with "document"
+remember a string called convergence with "open"
+remember a list called design-decisions with "none"
+remember a list called tradeoffs-considered with "none"
+remember a list called open-questions with "none"
+remember a number called lock-count with 0
+
+remember how to disclose from status: show status
+
+when convergence is equal to "locked"
+  show "OK: design converged — proceed to implementation"
+
+when claim-basis is equal to "inference" unless source-state is equal to "verified"
+  show "WARNING: design claim is inferred, not verified against source"
+
+when source-state is equal to "unscanned"
+  show "HOLD: scan prior art before proposing design"
+
+show "--- recording design decisions ---"
+add "decision-three-layer-architecture" to design-decisions
+add "decision-bounded-vocabulary" to design-decisions
+add "decision-tiered-operation" to design-decisions
+
+add "tradeoff-flexibility-vs-precision" to tradeoffs-considered
+add "tradeoff-skill-size-vs-coverage" to tradeoffs-considered
+
+add "question-pack-versioning-strategy" to open-questions
+
+show design-decisions
+show tradeoffs-considered
+show open-questions
+
+show "--- routing on convergence ---"
+choose if convergence is equal to "locked": show "ship the design" otherwise show "continue iterating"
+
+disclose from claim-basis
+count design-decisions

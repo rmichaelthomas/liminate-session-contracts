@@ -1,0 +1,44 @@
+show "=== Code review session contract ==="
+
+remember a string called source-state with "scanned"
+remember a string called claim-basis with "verified"
+remember a string called review-status with "in-progress"
+remember a list called files-reviewed with "none"
+remember a list called findings with "none"
+remember a list called findings-verified with "none"
+remember a number called severity-high with 0
+
+remember how to flag from item: show item
+
+when claim-basis is equal to "inference" unless source-state is equal to "verified"
+  show "WARNING: review claim not verified against source — re-read the file"
+
+when review-status is equal to "blocked"
+  show "HOLD: review is blocked — escalate before merging"
+
+when source-state is equal to "unscanned"
+  show "HOLD: file not yet read — do not comment on it"
+
+show "--- accumulating files reviewed ---"
+add "src-auth-handler" to files-reviewed
+add "src-token-store" to files-reviewed
+add "tests-auth-integration" to files-reviewed
+show files-reviewed
+
+show "--- recording findings ---"
+add "finding-missing-rate-limit" to findings
+add "finding-unbounded-retry-loop" to findings
+add "finding-naming-inconsistency" to findings
+
+show "--- only verified findings carry forward ---"
+add "finding-missing-rate-limit" to findings-verified
+add "finding-unbounded-retry-loop" to findings-verified
+
+show findings
+show findings-verified
+count findings-verified
+
+show "--- routing on verification ---"
+choose if claim-basis is equal to "verified": show "comments can be posted" otherwise show "re-verify before posting"
+
+flag from review-status
