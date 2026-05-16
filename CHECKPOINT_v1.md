@@ -6,6 +6,15 @@
 
 This is the honest version. Don't read the README for the state of the work; read this.
 
+> **Postscript (later same day, 2026-05-16):** SC-Q1 has shipped. The body below was correct as of the morning checkpoint; what changed since:
+> - **V4-Q1 is resolved.** Liminate-v2 (pack verb contract extension) added positional/connective-less slots, so `cite <text> from <source>` and `verify <claim> from <source>` can now be registered as pack verbs. Gap (h) below is closed.
+> - **`cite` ships as a pack verb,** not in the base interpreter. Execution type `substring_check`. Errors on miss. Recommendation (1) below is resolved through the pack contract rather than by adding to the base.
+> - **`verify` ships as a pack verb** with execution type `compare_values` (structural), `on_mismatch: "flag"`. It writes `verification-status` and `verification-divergences` instead of erroring — surfaces drift for inspection rather than blocking. (e) below's critique still applies in spirit: a `verify` that returns "match" only means the values are structurally equal, not that the claim is true. The contract is now constraining (substring check via `cite` errors) where the interpreter can check, and surfacing (status flag via `verify`) where it can't.
+> - **`drift` noun was removed** from the pack. Drift detection is now `verify` + `when verification-status is equal to "mismatch"`.
+> - **Prerequisite shipped in liminate#3:** descriptors are now stored on string and list variables, not just records, so `type_constraint: "source"` works on `remember a source called readme with "…"`.
+>
+> Read the body below for the reasoning that led here. Treat the specific "blocked by V4-Q1" claims as historical.
+
 ---
 
 ## What was shipped
