@@ -1,25 +1,12 @@
 {
-  "_comment": "Phase 2 design artifact. This pack follows the Liminate v4a §137 pack verb contract schema, but the interpreter does not yet load it — pack activation is implemented in the Liminate runtime but the session-domain vocabulary below is not yet wired into a Session. Treat this file as a forward-compatible specification, not an executable pack.",
+  "_comment": "Phase 2 design artifact. Nouns ship now under the v4a §137 pack contract. The `verify` verb is deferred pending V4-Q1 (connective-less direct-object slots) — see CHECKPOINT_v1.md.",
   "name": "session",
   "version": "0.1.0",
   "vocabulary": [
-    { "word": "claim",    "category": "noun" },
-    { "word": "source",   "category": "noun" },
+    { "word": "claim", "category": "noun" },
+    { "word": "source", "category": "noun" },
     { "word": "decision", "category": "noun" },
-    { "word": "drift",    "category": "noun" }
-  ],
-  "verbs": [
-    {
-      "word": "verify",
-      "slots": [
-        { "name": "target", "connective": "from", "required": true }
-      ],
-      "execution": {
-        "type": "set_value",
-        "target_name": "verification-status",
-        "source_slot": "target"
-      }
-    }
+    { "word": "drift", "category": "noun" }
   ],
   "declarations": [],
   "script": []

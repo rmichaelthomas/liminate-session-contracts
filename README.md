@@ -92,7 +92,7 @@ A session contract is not a Liminate-only artifact — the file is plain prose e
 | Phase | Status | What |
 |-------|--------|------|
 | 1 | shipped | This skill. Session contracts as a portable SKILL.md, running at four tiers. |
-| 2 | specified | A session pack that adds `claim`, `source`, `decision`, `drift`, and `verify` to the vocabulary. See `references/session_pack.json`. |
+| 2 | partial | A session pack that adds `claim`, `source`, `decision`, and `drift` to the vocabulary as nouns. See `references/session_pack.json`. The `verify` verb is deferred pending V4-Q1 (connective-less direct-object slots in the pack contract); the nouns ship now, the verb ships when the infrastructure supports `verify <claim> from <source>`. |
 | 3 | planned | Organizations writing operational knowledge as live `.limn` programs. |
 | 4 | planned | A runtime where concepts are addressable, versions are semantic, and relationships are queryable. |
 
