@@ -82,11 +82,40 @@ Liminate has 35 reserved words. See `references/vocabulary_quick_reference.md` f
 - A quoted string (e.g. `"unscanned"`)
 - A number
 
+When the session pack is loaded (`--pack references/session_pack.json`), 5 additional words are reserved: 3 nouns (`claim`, `source`, `decision`) and 2 verbs (`cite`, `verify`).
+
 Do not invent verbs or connectives. If you reach for a word that is not in the vocabulary, restructure the sentence using the vocabulary that exists.
 
-## Phase 2 — session pack (not yet executable)
+## Phase 2 — session pack
 
-`references/session_pack.json` defines an extended vocabulary for reasoning state (`claim`, `source`, `decision`, `drift`, `verify`). It follows the Liminate v4a pack verb contract schema, but the interpreter does not yet load it. Treat it as a forward-compatible specification: design contracts around the base 35-word vocabulary today; the pack will activate richer phrasing when integrated.
+`references/session_pack.json` defines an extended vocabulary for reasoning state. The pack is loadable today against the Liminate interpreter:
+
+```
+liminate --pack references/session_pack.json examples/research_contract.limn
+```
+
+The pack adds 5 words:
+
+- **`claim`** (noun) — descriptor for assertions awaiting verification
+- **`source`** (noun) — descriptor for primary sources
+- **`decision`** (noun) — descriptor for locked or open decisions
+- **`cite <text> from <source>`** (verb) — substring check, errors if the text is not found in the source. The model does not check — the interpreter does.
+- **`verify <claim> from <source>`** (verb) — structural comparison. Flags `verification-status` (`match` / `mismatch`) and `verification-divergences` (the diff). Does not error on mismatch — surfaces it for inspection.
+
+Usage example:
+
+```
+remember a source called readme with "Liminate has 35 reserved words."
+remember a claim called counted-claim with "Liminate has 35 reserved words."
+
+cite "35 reserved words" from readme
+verify counted-claim from readme
+
+when verification-status is equal to "mismatch"
+  show "WARN: claim diverges from source"
+```
+
+Both verbs use `type_constraint`: `cite` requires the `from` slot to carry the `source` descriptor; `verify` requires `claim` on its first slot and `source` on its `from` slot. A bare `remember a string called ...` will not satisfy these — use the matching descriptor.
 
 ## Reference files
 
