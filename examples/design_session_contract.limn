@@ -1,5 +1,8 @@
 show "=== Design session contract ==="
 
+remember a source called prior-art with "The three-layer architecture (lexer, parser, interpreter) is a known good pattern for small DSLs."
+remember a claim called convergence-claim with "The three-layer architecture is what Liminate uses."
+
 remember a string called source-state with "scanned"
 remember a string called claim-basis with "document"
 remember a string called convergence with "open"
@@ -18,6 +21,9 @@ when claim-basis is equal to "inference" unless source-state is equal to "verifi
 
 when source-state is equal to "unscanned"
   show "HOLD: scan prior art before proposing design"
+
+show "--- citing prior art before proposing ---"
+cite "three-layer architecture" from prior-art
 
 show "--- recording design decisions ---"
 add "decision-three-layer-architecture" to design-decisions

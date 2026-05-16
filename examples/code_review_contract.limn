@@ -1,5 +1,8 @@
 show "=== Code review session contract ==="
 
+remember a source called auth-handler-source with "function authenticate(token) { if (!token) throw new Error('missing token'); return verifyToken(token); }"
+remember a claim called rate-limit-missing with "authenticate() has no rate limiting and will accept unbounded calls."
+
 remember a string called source-state with "scanned"
 remember a string called claim-basis with "verified"
 remember a string called review-status with "in-progress"
@@ -18,6 +21,10 @@ when review-status is equal to "blocked"
 
 when source-state is equal to "unscanned"
   show "HOLD: file not yet read — do not comment on it"
+
+show "--- citing the source before flagging ---"
+cite "authenticate" from auth-handler-source
+cite "verifyToken" from auth-handler-source
 
 show "--- accumulating files reviewed ---"
 add "src-auth-handler" to files-reviewed

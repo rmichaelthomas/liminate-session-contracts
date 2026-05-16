@@ -1,5 +1,8 @@
 show "=== Session contract: template ==="
 
+remember a source called primary-source with "paste the verbatim source text here"
+remember a claim called working-claim with "paste the claim text being verified here"
+
 remember a string called source-state with "unscanned"
 remember a string called claim-basis with "none"
 remember a list called tracked-decisions with "none"
@@ -23,6 +26,9 @@ show source-state
 show claim-basis
 show tracked-decisions
 show open-questions
+
+show "--- example: citing the source before a consequential claim ---"
+cite "paste" from primary-source
 
 show "--- example: accumulating decisions and questions ---"
 add "decision-architecture-three-layer" to tracked-decisions
