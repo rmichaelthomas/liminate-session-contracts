@@ -36,7 +36,7 @@ User triggers: "start a contract", "session state", "what have you verified", "c
 
 ## How to operate — two-channel protocol
 
-The contract lives on a **separate channel** from your prose response. This is the load-bearing rule of the v2 skill: prose answers the user; contract mutations live in a fenced `limn` code block. Mixing the two — narrating contract updates inside the answer — is what the v1 skill got wrong, and what produced fabrication regressions on Sonnet 4.6 (CHECKPOINT_v1.md finding #2). Do not narrate the contract in prose.
+The contract lives on a **separate channel** from your prose response. This is the load-bearing rule of the v2 skill: prose answers the user; contract mutations live in a fenced `limn` code block. Mixing the two — narrating contract updates inside the answer — is what the v1 skill got wrong, and what produced fabrication regressions on Sonnet 4.6 in earlier benchmark rounds. Do not narrate the contract in prose.
 
 ### Channel 1 — Prose response
 

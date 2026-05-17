@@ -119,8 +119,6 @@ Session contracts and Karpathy-style instruction sets solve different problems. 
 - **Cross-agent portability is untested.** Benchmarked on Claude models only. Codex, Gemini, and Copilot have not been tested.
 - **The gate's catch behavior is unmeasured.** Across 101 gated turns, the interpreter gate never fired. Correctly designed infrastructure, unexercised revision path.
 
-The four benchmark checkpoints in `CHECKPOINT_v1.md` through `CHECKPOINT_v4.md` walk through the full evaluation history.
-
 ## License
 
 Apache 2.0. See [LICENSE](LICENSE).
