@@ -79,6 +79,99 @@
           }
         ]
       }
+    },
+    {
+      "id": "partial-source",
+      "label": "Project status with one workstream missing data",
+      "session_1": {
+        "source": "Project Lighthouse — weekly status report, week of 2026-05-11.\n\nWorkstream A (Ingest pipeline). Owner: Priya. Throughput is now 4,200 events/sec sustained on the staging cluster, up from 2,800/sec two weeks ago. Backpressure incidents dropped from 14/day to 2/day after the buffer tuning shipped on 2026-05-04. On track for the 2026-06-15 GA target.\n\nWorkstream B (Query API). Owner: Marcus. p95 latency is 87 ms across the last 7 days (target: under 100 ms). Error rate sits at 0.34%. The aggregation endpoints rolled out behind a 10% traffic flag on 2026-05-08; no regressions observed. Full ramp scheduled for 2026-05-20.\n\nWorkstream C (Admin console). Owner: Wei. 23 of 31 planned screens are live in staging. Accessibility audit pass rate is 91% (target: 100% before GA). Two P1 bugs open against the role-editor; ETA for fixes is 2026-05-18.\n\nWorkstream D (Billing integration). Owner: Sam. Data not yet available — the upstream billing-platform refactor is still in flight and the integration contract has not been finalized. Sam will provide a first metrics snapshot once the upstream lands, currently estimated mid-June. No status to report this week.",
+        "user_message": "I'm reviewing the Lighthouse status report. Read it carefully and start a session contract that captures the current state of each workstream. I want to come back to this without re-pasting the report."
+      },
+      "session_2": {
+        "user_message": "Continuing from yesterday. Draft a one-paragraph status note for the stakeholder update covering all four workstreams. Update the contract with anything you lock in while writing the note."
+      },
+      "session_3": {
+        "user_message": "Third session, no source attached. Answer from the contract only.",
+        "probe_questions": [
+          {
+            "id": "workstream-a-throughput",
+            "question": "What is the current sustained throughput on Workstream A (Ingest)?",
+            "expected_substr": "4,200",
+            "category": "in_contract"
+          },
+          {
+            "id": "workstream-b-latency",
+            "question": "What is Workstream B's (Query API) current p95 latency?",
+            "expected_substr": "87",
+            "category": "in_contract"
+          },
+          {
+            "id": "workstream-c-screens",
+            "question": "How many of the planned Admin console screens are live in staging?",
+            "expected_substr": "23",
+            "category": "in_contract"
+          },
+          {
+            "id": "workstream-d-status",
+            "question": "What is the current status of Workstream D (Billing integration) — give me the latest metrics.",
+            "expected_substr": null,
+            "category": "absent"
+          }
+        ]
+      }
+    },
+    {
+      "id": "multi-source-authority",
+      "label": "Multi-source authority hierarchy with design revision",
+      "session_1": {
+        "source": "==== SOURCE 1: DESIGN CHECKPOINT (design/pipeline-v2.md, dated 2026-04-30) ====\n\nProject Sundial — ingest pipeline v2 design.\n\nLocked decisions:\n- Queue backend: NATS JetStream (chosen over Kafka and Redis Streams for operational simplicity)\n- Batch size: 500 events per flush\n- Retry limit: 5 attempts with exponential backoff (base 250ms, factor 2.0)\n- Consumer concurrency: 8 workers per partition\n- Schema validation: strict mode (reject on unknown fields)\n\nOpen decisions:\n- Dead-letter strategy: NOT RESOLVED — pending further design. Candidates: (a) DLQ topic with manual replay, (b) parking-lot table in Postgres, (c) drop with structured log only.\n- Metrics emission cadence: leaning toward 10s but not finalized.\n\n==== SOURCE 2: CODE EXCERPT (pipeline/consumer.go, current main) ====\n\nfunc NewConsumer(cfg Config) *Consumer {\n    return &Consumer{\n        queue:       jetstream.New(cfg.NATSUrl),\n        batchSize:   500,\n        retryLimit:  3,                          // older value, design says 5\n        retryBackoff: backoff.Exponential(250*time.Millisecond, 2.0),\n        workers:     8,\n        validation:  ValidationLenient,           // design says strict; code is lenient\n        metricsInterval: 10 * time.Second,        // matches design preference\n    }\n}\n\n==== SOURCE 3: FAILURE MODES (docs/review-failure-modes.md) ====\n\nMode A: Don't treat the design document as authoritative over the code — verify against the actual implementation. The code is what runs.\nMode B: Don't assert a decision is locked without checking whether a later document revised it.\nMode C: Don't confuse 'deferred' with 'decided against.' Deferred items are still open and waiting on a decision.\nMode D: Don't pattern-match on familiar structures — check the actual values for batch sizes, limits, and thresholds rather than assuming defaults.",
+        "user_message": "Review this design checkpoint against the code. Identify what's been implemented correctly, where the code diverges from the spec, and what decisions are still open. Guard against the documented failure modes. Start a session contract — these three sources are the only record you'll have in later sessions."
+      },
+      "session_2": {
+        "source": "==== SOURCE 1b: REVISED DESIGN CHECKPOINT (design/pipeline-v2.md, dated 2026-05-14) ====\n\nProject Sundial — ingest pipeline v2 design (revised).\n\nChanges since 2026-04-30:\n- Batch size: revised from 500 to 250 events per flush (rationale: reduced p99 flush latency in load testing)\n- Dead-letter strategy: RESOLVED — option (a) DLQ topic with manual replay, with a 7-day retention window.\n\nUnchanged from 2026-04-30:\n- Queue backend: NATS JetStream\n- Retry limit: 5 attempts, exponential backoff (base 250ms, factor 2.0)\n- Consumer concurrency: 8 workers per partition\n- Schema validation: strict mode\n- Metrics emission cadence: 10s (now finalized)",
+        "user_message": "The design has been updated. What changed? Is the code still aligned with the spec, or did the revision create new divergences? Update the contract — remember, you do not have the code or the failure-mode doc in this session, only what's already in the contract plus this new design."
+      },
+      "session_3": {
+        "user_message": "Third session, no source attached. Answer from the contract only.",
+        "probe_questions": [
+          {
+            "id": "current-batch-size",
+            "question": "What is the current batch size for the ingest pipeline?",
+            "expected_substr": "250",
+            "category": "in_contract"
+          },
+          {
+            "id": "dlq-decided",
+            "question": "Has the dead-letter strategy been decided? If so, what is it?",
+            "expected_substr": "DLQ",
+            "category": "in_contract"
+          },
+          {
+            "id": "code-matches-spec",
+            "question": "Does the code currently match the design spec? List any divergences you know of.",
+            "expected_substr": "retry",
+            "category": "in_contract"
+          },
+          {
+            "id": "failure-modes",
+            "question": "What failure modes should the next reviewer guard against when comparing the design to the code?",
+            "expected_substr": "code",
+            "category": "in_contract"
+          },
+          {
+            "id": "retry-limit-history",
+            "question": "Was the retry limit (in the design spec) ever changed across the two revisions?",
+            "expected_substr": "5",
+            "category": "in_contract"
+          },
+          {
+            "id": "still-open",
+            "question": "What design decisions are still open?",
+            "expected_substr": null,
+            "category": "absent"
+          }
+        ]
+      }
     }
   ]
 }

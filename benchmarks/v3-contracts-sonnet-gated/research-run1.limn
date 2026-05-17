@@ -1,0 +1,94 @@
+show "=== Session contract: template ==="
+
+remember a source called primary-source with "paste the verbatim source text here"
+remember a claim called working-claim with "paste the claim text being verified here"
+
+remember a string called source-state with "unscanned"
+remember a string called claim-basis with "none"
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+remember a number called decision-count with 0
+
+remember how to disclose from status: show status
+remember how to summarize from label: count label
+
+when source-state is equal to "unscanned"
+  show "HOLD: source not yet scanned — verify before consequential claims"
+
+when claim-basis is equal to "inference" unless source-state is equal to "verified"
+  show "WARNING: current claims are inferred, not verified against source"
+
+when claim-basis is equal to "verified"
+  show "OK: claims grounded in verified source"
+
+show "--- state snapshot ---"
+show source-state
+show claim-basis
+show tracked-decisions
+show open-questions
+
+show "--- example: citing the source before a consequential claim ---"
+cite "paste" from primary-source
+
+show "--- example: accumulating decisions and questions ---"
+add "decision-architecture-three-layer" to tracked-decisions
+add "decision-vocab-bounded-35" to tracked-decisions
+add "question-pack-loader-design" to open-questions
+show tracked-decisions
+show open-questions
+summarize from tracked-decisions
+
+show "--- example: routing on verification status ---"
+choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
+
+disclose from claim-basis
+
+show "=== Session contract: Halverson & Roy 2025 — Edge Cache Routing ==="
+
+remember a source called primary-source with "We evaluated four routing policies (greedy-nearest, weighted-RTT, consistent-hash, and learned-policy) across a 14-node multi-region deployment over 90 days. The learned-policy reduced p99 tail latency by 38.4% relative to greedy-nearest at the cost of a 12% increase in median CPU on routing nodes. Cache hit rates improved from 71.2% (greedy-nearest baseline) to 83.6% (learned-policy). Failover-recovery time was unchanged across all four policies (median 1.7s, p99 4.2s). The study was funded by the Edge Systems Consortium grant ESC-2024-31 and the dataset is published under CC-BY at edge-cache-data.org/halverson-roy-2025."
+
+remember a string called source-state with "verified"
+remember a string called claim-basis with "verified"
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+remember a number called decision-count with 0
+
+cite "38.4%" from primary-source
+cite "12% increase in median CPU" from primary-source
+cite "71.2%" from primary-source
+cite "83.6%" from primary-source
+cite "median 1.7s, p99 4.2s" from primary-source
+cite "14-node multi-region deployment" from primary-source
+cite "90 days" from primary-source
+cite "edge-cache-data.org/halverson-roy-2025" from primary-source
+cite "ESC-2024-31" from primary-source
+
+add "finding-learned-policy-p99-latency-reduction-38.4pct-vs-greedy-nearest" to tracked-decisions
+add "finding-cpu-cost-12pct-increase-on-routing-nodes" to tracked-decisions
+add "finding-cache-hit-rate-71.2pct-to-83.6pct" to tracked-decisions
+add "finding-failover-recovery-unchanged-all-four-policies" to tracked-decisions
+add "finding-dataset-cc-by-edge-cache-data.org" to tracked-decisions
+
+add "question-learned-policy-algorithm-not-described-in-abstract" to open-questions
+add "question-weighted-RTT-and-consistent-hash-results-not-quantified-in-abstract" to open-questions
+add "question-whether-cpu-cost-holds-under-traffic-spike-conditions" to open-questions
+
+remember how to disclose from status: show status
+remember how to summarize from label: count label
+
+when source-state is equal to "verified"
+  show "OK: claims grounded in verified source"
+
+when claim-basis is equal to "verified"
+  show "OK: claims grounded in verified source"
+
+show "--- state snapshot ---"
+show source-state
+show claim-basis
+show tracked-decisions
+show open-questions
+
+add "decision-hypothesis-comparison: learned-policy-hypothesis-partially-supported — p99 reduction confirmed at 38.4pct, but 12pct CPU overhead on routing nodes unlikely disqualifying given routing nodes not typically bottleneck; cache hit rate gain 71.2pct-to-83.6pct provides downstream origin-offload offset not captured in hypothesis; failover unchanged across all policies; hypothesis framing too pessimistic for cache-heavy workloads" to tracked-decisions
+
+add "question-whether-12pct-cpu-overhead-measured-at-peak-or-median-traffic-load" to open-questions
+add "question-origin-offload-savings-from-hit-rate-improvement-not-quantified-in-paper" to open-questions
