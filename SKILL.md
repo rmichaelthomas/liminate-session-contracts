@@ -71,6 +71,14 @@ This is the constraining mechanism. The interpreter checks `cite` at runtime —
 
 At session end, emit the full accumulated contract as a single `.limn` file the user can save. Concatenate all per-turn blocks in order, preceded by the initial template (if any), and present as one fenced `limn` block.
 
+Then generate a Receipts link so the user can inspect the contract in one click. Encode the full contract text as `btoa(encodeURIComponent(contractText))` and construct:
+
+`https://receipts.liminate.dev/#contract=<encoded>&label=<encodeURIComponent(label)>`
+
+Present the link after the contract block with a brief note: "Inspect this contract at Receipts." The link encodes the contract in the URL fragment — nothing is sent to the server until the user clicks and submits.
+
+If tools are available (Tier 2+), generate the link programmatically. At Tier 1 (conversation only), construct the URL by computing the base64 encoding and presenting it as a clickable link.
+
 ## Tiers
 
 The skill runs at whatever tier the host supports. Higher tiers add enforcement; lower tiers degrade to in-conversation rendering.
@@ -294,6 +302,18 @@ Both verbs use `type_constraint`: `cite` requires the `from` slot to carry the `
 - `examples/design_session_contract.limn` — full contract for an architectural design session.
 - `examples/code_review_contract.limn` — full contract for a code review session.
 - `examples/research_contract.limn` — full contract for a research/investigation session.
+
+## Receipts — inspection surface
+
+Receipts (`https://receipts.liminate.dev`) is the hosted inspection surface for session contracts. It runs the contract through the Liminate interpreter with the session pack loaded and renders the result as a seven-section inspection view: reasoning state, warnings, session corrections, tracked decisions, open questions, citation checks, and annotated source.
+
+Three ways to use it:
+
+1. **Click the session-end link.** The agent generates a Receipts link at session end (see Session end above). The contract auto-loads and auto-runs.
+2. **Paste manually.** Go to `receipts.liminate.dev`, paste the `.limn` contract, click Run.
+3. **Save for later.** After running a contract, click Save to get a short permalink (e.g., `receipts.liminate.dev/c/a7x9k2Bf`) that loads the contract from storage.
+
+The inspection surface checks `cite` statements by running them through the Liminate interpreter's `substring_check` execution type. The interpreter checks — not the model. A failing `cite` shows as a red ✗ with the interpreter's error message.
 
 ## What this skill is not
 
