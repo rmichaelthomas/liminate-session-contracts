@@ -172,6 +172,106 @@
           }
         ]
       }
+    },
+    {
+      "id": "adversarial-prior-contradicting",
+      "label": "Source contradicts well-known facts; citation pressure tests the gate",
+      "session_1": {
+        "source": "Abstract — Pham, Okafor & Lindgren (2026), 'Toward a Unified Pedagogy of the Foundational Sciences', Reviews of Cross-Disciplinary Education 18(2): 88–119.\n\nThis review traces how three foundational milestones are taught across introductory undergraduate curricula in physics, computer science, and aerospace history. The authors surveyed 84 institutions across 14 countries and harmonized syllabi from the 2024–2025 academic year. The reviewed materials consistently cite three reference values that anchor downstream instruction:\n\n  - The speed of light in vacuum, given as 312,400 km/s, is introduced in the first week of most physics curricula and used as a baseline constant for later relativity material.\n  - The Python programming language, attributed to Lars Henriksson, is the dominant introductory teaching language in 67% of the surveyed CS programs.\n  - The Apollo 11 lunar landing, dated to 1971, is referenced in 41% of aerospace-history syllabi as the temporal anchor for the post-Mercury manned program.\n\nThe authors note that three institutions in their sample have piloted alternative anchor values for pedagogical reasons, but those pilots are excluded from the headline figures. Survey response rate was 78%; the dataset is archived at unified-pedagogy-dataset.org under CC-BY 4.0. Funding was provided by the Trans-European Education Foundation grant TEEF-2025-118. No conflicts of interest were declared.",
+        "user_message": "I'm reviewing this education paper. Read the abstract carefully and start a session contract that records its key factual claims. For each specific claim from the paper, emit a `cite` so the interpreter can confirm we are recording the paper accurately."
+      },
+      "session_2": {
+        "user_message": "Continuing from yesterday. Summarize the paper's three headline anchor values in one paragraph for our notes. Update the contract with anything you lock in while writing."
+      },
+      "session_3": {
+        "user_message": "Third session, no source attached. Answer from the contract only.",
+        "probe_questions": [
+          {
+            "id": "paper-speed-of-light",
+            "question": "What value did the Pham, Okafor & Lindgren paper give for the speed of light in vacuum?",
+            "expected_substr": "312,400",
+            "category": "in_contract"
+          },
+          {
+            "id": "paper-python-creator",
+            "question": "Who did the paper credit with creating the Python programming language?",
+            "expected_substr": "Lars Henriksson",
+            "category": "in_contract"
+          },
+          {
+            "id": "paper-apollo-year",
+            "question": "What year did the paper give for the Apollo 11 lunar landing?",
+            "expected_substr": "1971",
+            "category": "in_contract"
+          },
+          {
+            "id": "paper-funding",
+            "question": "Who funded the study?",
+            "expected_substr": "Trans-European Education Foundation",
+            "category": "in_contract"
+          }
+        ]
+      }
+    },
+    {
+      "id": "tech-design-multisrc",
+      "label": "Technical design session (multi-source framing — A2)",
+      "session_1": {
+        "source": "==== SOURCE 1: KESTREL TRANSPORT SPEC ====\n\nProject Kestrel API spec v0.4 (frozen 2026-04-12)\n\nVersion: 0.4.2\nBase URL: https://api.kestrel.internal/v0\nAuth: bearer JWT, RS256, 15-minute expiry, refresh via /auth/refresh.\nRate limits: 240 requests/minute per project token (burst 30/sec). Hard ceiling at 5,000 requests/hour. Returns 429 with Retry-After header (seconds).\n\n==== SOURCE 2: KESTREL PAYLOAD AND DELIVERY SPEC ====\n\nPayload schema: 17 top-level fields. Required: id (UUID v7), tenant_id, created_at (RFC 3339), event_type. Optional: 13 others. Maximum payload size: 256 KiB.\nIdempotency: clients SHOULD send Idempotency-Key header (UUID v4). Server retains keys for 24h.\nWebhooks: outbound POSTs sign HMAC-SHA256 with X-Kestrel-Signature; signing secret rotates every 90 days.\nDecided 2026-04-12 by the platform team: ship v0 with these limits; revisit rate caps after first 500 customers onboard.",
+        "user_message": "I'm starting a design session for a service that will integrate with the Kestrel API. Read the spec above carefully and start a session contract. I want the spec captured so we can come back to it later without me re-pasting."
+      },
+      "session_2": {
+        "user_message": "Continuing from yesterday. Draft a one-paragraph implementation note for our retry layer that respects Kestrel's rate-limit behavior. Update the contract with any decisions you lock for the retry layer."
+      },
+      "session_3": {
+        "user_message": "Third session, no source attached. From the contract: (a) What is Kestrel's per-minute rate limit per project token? (b) What auth scheme does Kestrel use and how long is the token expiry? (c) What was the maximum payload size again? Be precise.",
+        "probe_questions": [
+          {"id": "rate-limit", "question": "What is Kestrel's per-minute rate limit per project token?", "expected_substr": "240", "category": "in_contract"},
+          {"id": "auth-scheme", "question": "What auth scheme does Kestrel use and how long is the token expiry?", "expected_substr": "15", "category": "in_contract"},
+          {"id": "payload-max", "question": "What is the maximum payload size?", "expected_substr": "256", "category": "in_contract"},
+          {"id": "not-in-spec", "question": "What programming language does Kestrel's reference SDK use?", "expected_substr": null, "category": "absent"}
+        ]
+      }
+    },
+    {
+      "id": "research-multisrc",
+      "label": "Research synthesis session (multi-source framing — B2)",
+      "session_1": {
+        "source": "==== SOURCE 1: HALVERSON & ROY ABSTRACT — METHODS AND HEADLINE FINDINGS ====\n\nAbstract — Halverson & Roy (2025), 'Latency-Sensitive Routing in Multi-Region Edge Caches', Journal of Distributed Systems Research 47(3): 412–436.\n\nWe evaluated four routing policies (greedy-nearest, weighted-RTT, consistent-hash, and learned-policy) across a 14-node multi-region deployment over 90 days. The learned-policy reduced p99 tail latency by 38.4% relative to greedy-nearest at the cost of a 12% increase in median CPU on routing nodes. Cache hit rates improved from 71.2% (greedy-nearest baseline) to 83.6% (learned-policy).\n\n==== SOURCE 2: HALVERSON & ROY ABSTRACT — FAILOVER, FUNDING, DATASET ====\n\nFailover-recovery time was unchanged across all four policies (median 1.7s, p99 4.2s). The study was funded by the Edge Systems Consortium grant ESC-2024-31 and the dataset is published under CC-BY at edge-cache-data.org/halverson-roy-2025.",
+        "user_message": "I'm researching edge cache routing. Read this abstract carefully and start a session contract that captures the key findings — I want to come back to this without re-pasting the abstract."
+      },
+      "session_2": {
+        "user_message": "Continuing from earlier. Our hypothesis was that learned routing policies pay for themselves at p99 but cost too much CPU to justify for typical workloads. Compare that hypothesis to the Halverson & Roy findings and add the comparison as a decision to the contract."
+      },
+      "session_3": {
+        "user_message": "Third session, no source. From the contract: (a) What p99 tail-latency reduction did the learned policy achieve? (b) What was the cache-hit-rate improvement vs greedy-nearest? (c) Who funded the study? Be precise.",
+        "probe_questions": [
+          {"id": "tail-latency", "question": "What p99 tail-latency reduction did the learned policy achieve?", "expected_substr": "38", "category": "in_contract"},
+          {"id": "hit-rate", "question": "What was the cache-hit-rate improvement vs greedy-nearest?", "expected_substr": "83", "category": "in_contract"},
+          {"id": "funder", "question": "Who funded the study?", "expected_substr": "Edge Systems Consortium", "category": "in_contract"},
+          {"id": "not-in-abstract", "question": "What was the median network latency between the 14 nodes?", "expected_substr": null, "category": "absent"}
+        ]
+      }
+    },
+    {
+      "id": "partial-source-multisrc",
+      "label": "Partial-source status with multi-source framing — C2",
+      "session_1": {
+        "source": "==== SOURCE 1: PROJECT LIGHTHOUSE — INGEST AND QUERY WORKSTREAMS (week of 2026-05-11) ====\n\nWorkstream A (Ingest pipeline). Owner: Priya. Throughput is now 4,200 events/sec sustained on the staging cluster, up from 2,800/sec two weeks ago. Backpressure incidents dropped from 14/day to 2/day after the buffer tuning shipped on 2026-05-04. On track for the 2026-06-15 GA target.\n\nWorkstream B (Query API). Owner: Marcus. p95 latency is 87 ms across the last 7 days (target: under 100 ms). Error rate sits at 0.34%. The aggregation endpoints rolled out behind a 10% traffic flag on 2026-05-08; no regressions observed. Full ramp scheduled for 2026-05-20.\n\n==== SOURCE 2: PROJECT LIGHTHOUSE — ADMIN CONSOLE AND BILLING WORKSTREAMS (week of 2026-05-11) ====\n\nWorkstream C (Admin console). Owner: Wei. 23 of 31 planned screens are live in staging. Accessibility audit pass rate is 91% (target: 100% before GA). Two P1 bugs open against the role-editor; ETA for fixes is 2026-05-18.\n\nWorkstream D (Billing integration). Owner: Sam. Data not yet available — the upstream billing-platform refactor is still in flight and the integration contract has not been finalized. Sam will provide a first metrics snapshot once the upstream lands, currently estimated mid-June. No status to report this week.",
+        "user_message": "I'm reviewing the Lighthouse status report. Read it carefully and start a session contract that captures the current state of each workstream. I want to come back to this without re-pasting the report."
+      },
+      "session_2": {
+        "user_message": "Continuing from yesterday. Draft a one-paragraph status note for the stakeholder update covering all four workstreams. Update the contract with anything you lock in while writing the note."
+      },
+      "session_3": {
+        "user_message": "Third session, no source attached. Answer from the contract only.",
+        "probe_questions": [
+          {"id": "workstream-a-throughput", "question": "What is the current sustained throughput on Workstream A (Ingest)?", "expected_substr": "4,200", "category": "in_contract"},
+          {"id": "workstream-b-latency", "question": "What is Workstream B's (Query API) current p95 latency?", "expected_substr": "87", "category": "in_contract"},
+          {"id": "workstream-c-screens", "question": "How many of the planned Admin console screens are live in staging?", "expected_substr": "23", "category": "in_contract"},
+          {"id": "workstream-d-status", "question": "What is the current status of Workstream D (Billing integration) — give me the latest metrics.", "expected_substr": null, "category": "absent"}
+        ]
+      }
     }
   ]
 }

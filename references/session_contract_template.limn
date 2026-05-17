@@ -27,8 +27,9 @@ show claim-basis
 show tracked-decisions
 show open-questions
 
-show "--- example: citing the source before a consequential claim ---"
-cite "paste" from primary-source
+show "--- how to cite the source before a consequential claim ---"
+show "write your own statement of the form: cite <exact substring from your source> from <your-source-name>"
+show "the substring must be present in the source text or the interpreter will error"
 
 show "--- example: accumulating decisions and questions ---"
 add "decision-architecture-three-layer" to tracked-decisions

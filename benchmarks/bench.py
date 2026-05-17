@@ -31,7 +31,11 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
+import shutil
 import statistics
+import subprocess
+import tempfile
 import time
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
@@ -43,6 +47,7 @@ import anthropic
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL_MD = (REPO_ROOT / "SKILL.md").read_text()
 DEFAULT_TASKS_FILE = Path(__file__).parent / "tasks.json"
+LIMN_BLOCK_RE = re.compile(r"```limn\s*\n(.*?)```", re.DOTALL | re.IGNORECASE)
 
 BASELINE_SYSTEM = (
     "You are answering questions based on a provided source document. "
@@ -80,6 +85,11 @@ class CallResult:
     cache_creation_input_tokens: int
     cache_read_input_tokens: int
     latency_s: float
+    # Gate fields (None means gate was not run for this result, e.g. baseline).
+    delta_emitted: bool | None = None      # did the response contain a `limn` block?
+    gate_passed: bool | None = None        # did the delta pass `liminate --pack`?
+    gate_error: str = ""                   # interpreter error text if it failed
+    gate_would_catch: bool | None = None   # judge=fabricated AND gate_passed=False
 
 
 @dataclass
@@ -116,7 +126,39 @@ def system_for(condition: str) -> str | list[dict]:
     ]
 
 
-def run_one(client: anthropic.Anthropic, model: str, condition: str, task: dict, run_idx: int, judge_model: str) -> CallResult:
+def extract_limn_block(text: str) -> str:
+    matches = LIMN_BLOCK_RE.findall(text)
+    return matches[-1].strip() if matches else ""
+
+
+def check_delta_with_gate(delta_text: str) -> tuple[bool, str]:
+    """Run `delta_text` through `liminate --pack`. Returns (passed, error_text).
+    If `liminate` is not installed, returns (True, '(skipped)')."""
+    liminate = shutil.which("liminate")
+    if not liminate:
+        return True, "(liminate CLI not installed, skipped)"
+    pack = REPO_ROOT / "references" / "session_pack.json"
+    with tempfile.NamedTemporaryFile("w", suffix=".limn", delete=False) as tmp:
+        tmp.write(delta_text)
+        path = tmp.name
+    try:
+        proc = subprocess.run(
+            [liminate, "--pack", str(pack), path],
+            capture_output=True, text=True, timeout=30,
+        )
+        if proc.returncode == 0:
+            return True, ""
+        return False, (proc.stderr or proc.stdout).strip()[:500]
+    except Exception as e:
+        return False, f"liminate invocation failed: {e}"
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
+
+def run_one(client: anthropic.Anthropic, model: str, condition: str, task: dict, run_idx: int, judge_model: str, gate: bool = False) -> CallResult:
     started = time.monotonic()
     response = client.messages.create(
         model=model,
@@ -129,7 +171,7 @@ def run_one(client: anthropic.Anthropic, model: str, condition: str, task: dict,
 
     bucket = judge(client, judge_model, task, text)
 
-    return CallResult(
+    result = CallResult(
         task_id=task["id"],
         condition=condition,
         run=run_idx,
@@ -141,6 +183,24 @@ def run_one(client: anthropic.Anthropic, model: str, condition: str, task: dict,
         cache_read_input_tokens=getattr(response.usage, "cache_read_input_tokens", 0) or 0,
         latency_s=latency,
     )
+
+    # Gate the skill condition's delta if requested.
+    if gate and condition == "skill":
+        delta = extract_limn_block(text)
+        result.delta_emitted = bool(delta)
+        if delta:
+            passed, err = check_delta_with_gate(delta)
+            result.gate_passed = passed
+            result.gate_error = err
+            # "Would the gate catch this fabrication?" — only meaningful when the
+            # judge already flagged the answer as fabricated AND the gate errored.
+            result.gate_would_catch = (bucket == "fabricated") and (passed is False)
+        else:
+            # No delta = nothing for the gate to check.
+            result.gate_passed = None
+            result.gate_would_catch = False if bucket == "fabricated" else None
+
+    return result
 
 
 def judge(client: anthropic.Anthropic, model: str, task: dict, answer: str) -> Bucket:
@@ -261,6 +321,23 @@ def print_report(results: list[CallResult], tasks: list[dict]) -> None:
         if agg.latencies:
             print(f"  Latency p50/p95: {statistics.median(agg.latencies):.2f}s / {sorted(agg.latencies)[int(0.95*len(agg.latencies))]:.2f}s")
 
+    # Gate metrics (only present if --gate was on)
+    skill_results = [r for r in results if r.condition == "skill"]
+    gated = [r for r in skill_results if r.gate_passed is not None or r.delta_emitted is not None]
+    if gated:
+        emitted = [r for r in gated if r.delta_emitted]
+        passed = [r for r in emitted if r.gate_passed]
+        tripped = [r for r in emitted if r.gate_passed is False]
+        fabs = [r for r in skill_results if r.bucket == "fabricated"]
+        caught = [r for r in fabs if r.gate_would_catch]
+        print("\nGATE METRICS (skill condition)")
+        print(f"  contract deltas emitted:        {len(emitted)}/{len(gated)}  {pct(len(emitted), len(gated))}")
+        print(f"  deltas passed interpreter:      {len(passed)}/{len(emitted) or 1}  {pct(len(passed), len(emitted))}")
+        print(f"  deltas tripped interpreter:     {len(tripped)}/{len(emitted) or 1}  {pct(len(tripped), len(emitted))}")
+        print(f"  fabrications gate would catch:  {len(caught)}/{len(fabs) or 1}  {pct(len(caught), len(fabs))}")
+        for r in tripped[:5]:
+            print(f"  [trip] task={r.task_id} run={r.run} bucket={r.bucket}: {r.gate_error[:160]}")
+
     # Headline comparison
     if "baseline" in by_condition and "skill" in by_condition:
         b_fab_unans = sum(1 for r in results if r.condition == "baseline" and r.task_id in unanswerable_ids and r.bucket == "fabricated")
@@ -289,6 +366,7 @@ def main() -> None:
     parser.add_argument("--tasks-file", default=str(DEFAULT_TASKS_FILE), help="Path to tasks JSON")
     parser.add_argument("--out", default=str(Path(__file__).parent / "results.jsonl"))
     parser.add_argument("--rejudge-from", default=None, help="Re-judge an existing results.jsonl with --judge-model instead of running generation. Use this for self-vs-independent judge comparison without paying for regeneration.")
+    parser.add_argument("--gate", action="store_true", help="Run `liminate --pack` against the skill condition's `limn` delta. Records whether the delta would have errored (gate_would_catch) — single-turn, no revision attempt.")
     args = parser.parse_args()
     judge_model = args.judge_model or args.model
     all_tasks = json.loads(Path(args.tasks_file).read_text())["tasks"]
@@ -309,6 +387,7 @@ def main() -> None:
     print(f"Judge: {judge_model}{'  (self-grading)' if judge_model == args.model else '  (independent)'}")
     print(f"Tasks: {len(tasks)}  Runs: {args.runs}  Conditions: {conditions}")
     print(f"Total generation calls: {total_calls} (plus same number of judge calls)")
+    print(f"Gate: {'ON (skill responses checked by liminate; no revision)' if args.gate else 'off'}")
     print(f"Writing per-call results to {args.out}\n")
 
     results: list[CallResult] = []
@@ -320,7 +399,7 @@ def main() -> None:
                     n += 1
                     print(f"[{n}/{total_calls}] {condition:9s} {task['id']} run={run_idx} ... ", end="", flush=True)
                     try:
-                        r = run_one(client, args.model, condition, task, run_idx, judge_model)
+                        r = run_one(client, args.model, condition, task, run_idx, judge_model, gate=args.gate)
                         results.append(r)
                         f.write(json.dumps(r.__dict__) + "\n")
                         f.flush()
