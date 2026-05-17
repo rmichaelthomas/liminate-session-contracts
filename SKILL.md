@@ -29,10 +29,10 @@ Invoke this skill in any of these situations:
 1. **Session start** — when the user begins consequential work (design decisions, code reviews, research synthesis, planning). Offer to create a contract. If accepted, start one.
 2. **Pre-claim check** — before stating a consequential conclusion, check the contract. If `claim-basis` is `inference` and `source-state` is not `verified`, disclose that before stating the claim.
 3. **Post-decision update** — when a decision is locked or reversed, update the contract.
-4. **Session end** — produce the final contract as a `.limn` file the user can save.
+4. **Session end** — when the user signals the session is ending (e.g., "that ends this session", "let's wrap up", "we're done"), immediately produce the final contract, generate a Receipts permalink, and close the contract. Do not wait to be asked — the session-end signal IS the trigger. After closure, no further contract deltas are emitted.
 5. **User correction** — when the user pushes back on how you're engaging (not what you're saying), record the correction immediately in the contract delta. This is the highest-priority trigger — corrections apply to every subsequent response.
 
-User triggers: "start a contract", "session state", "what have you verified", "check your reasoning", "are you sure".
+User triggers: "start a contract", "session state", "what have you verified", "check your reasoning", "are you sure", "that ends this session", "let's wrap up", "session over", "we're done", "close it out", "end the session".
 
 ## How to operate — two-channel protocol
 
@@ -69,15 +69,31 @@ This is the constraining mechanism. The interpreter checks `cite` at runtime —
 
 ### Session end
 
-At session end, emit the full accumulated contract as a single `.limn` file the user can save. Concatenate all per-turn blocks in order, preceded by the initial template (if any), and present as one fenced `limn` block.
+At session end, do three things in order:
 
-Then generate a Receipts link so the user can inspect the contract in one click. Encode the full contract text as `btoa(encodeURIComponent(contractText))` and construct:
+1. **Emit the final contract.** Concatenate all per-turn delta blocks in order, preceded by the initial template (if any), and present as one fenced `limn` block. This is the complete session contract.
 
-`https://receipts.liminate.dev/#contract=<encoded>&label=<encodeURIComponent(label)>`
+2. **Generate a Receipts permalink.** Save the contract to the Receipts inspection surface and present the permalink.
 
-Present the link after the contract block with a brief note: "Inspect this contract at Receipts." The link encodes the contract in the URL fragment — nothing is sent to the server until the user clicks and submits.
+   **Tier 2+ (bash/file tools available):** Call the Receipts API directly:
 
-If tools are available (Tier 2+), generate the link programmatically. At Tier 1 (conversation only), construct the URL by computing the base64 encoding and presenting it as a clickable link.
+   ```bash
+   curl -s -X POST https://receipts.liminate.dev/save \
+     -H "Content-Type: application/json" \
+     -d '{"source": "<full contract text, JSON-escaped>", "label": "<session label>"}' \
+     | python3 -c "import sys,json; print('https://receipts.liminate.dev' + json.load(sys.stdin)['contract']['permalink'])"
+   ```
+
+   Present the resulting permalink (e.g., `https://receipts.liminate.dev/c/a7x9k2Bf`).
+
+   **Tier 1 (conversation only, no tools):** You cannot call the API. Provide a ready-to-paste terminal command:
+   - Emit the full contract as a fenced `limn` block (step 1 above).
+   - Below it, provide a `curl` command the user can paste into their terminal. Use the same shape as the Tier 2+ command, with the contract text JSON-escaped in the `-d` body.
+   - Tell the user: "Paste this command in your terminal to save this contract to Receipts and get a permalink."
+
+   **Do NOT generate fragment-encoded URLs (`#contract=<base64>`) for contracts longer than 5 lines.** The encoding is token-expensive, produces unwieldy URLs, and takes minutes to generate. Fragment URLs are acceptable only for very short demo contracts. For any real session contract, use `POST /save`.
+
+3. **Close the contract.** After emitting the final contract and the permalink, the contract is closed. Do not emit any further `limn` delta blocks in this conversation. If the user continues talking after session end (follow-up questions, corrections, new tasks), respond normally in prose but do not append to the contract. The contract is a record of the session that ended — not a living document that grows indefinitely.
 
 ## Tiers
 
@@ -309,7 +325,7 @@ Receipts (`https://receipts.liminate.dev`) is the hosted inspection surface for 
 
 Three ways to use it:
 
-1. **Click the session-end link.** The agent generates a Receipts link at session end (see Session end above). The contract auto-loads and auto-runs.
+1. **Click the session-end permalink.** The agent saves the contract to Receipts via `POST /save` and presents a short permalink (e.g., `receipts.liminate.dev/c/a7x9k2Bf`). At Tier 1 (no tools), the agent provides a paste-ready terminal command instead.
 2. **Paste manually.** Go to `receipts.liminate.dev`, paste the `.limn` contract, click Run.
 3. **Save for later.** After running a contract, click Save to get a short permalink (e.g., `receipts.liminate.dev/c/a7x9k2Bf`) that loads the contract from storage.
 
