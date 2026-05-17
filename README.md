@@ -23,6 +23,29 @@ A session contract is the smallest useful thing that does that.
 
 The longer write-up — three-layer architecture, four-phase roadmap, the cross-model convergence — lives in the [Liminate repository](https://github.com/rmichaelthomas/liminate).
 
+## What the benchmarks say
+
+Four rounds of benchmarking measured the skill's load-bearing claim: when the source is gone and only the contract remains, the model retrieves or discloses — it does not fabricate.
+
+**252 cross-session continuity probes. Zero fabrications.**
+
+Tested on Opus 4.7 and Sonnet 4.6 with independent cross-model judging, across five scenario types: single-source technical design, single-source research synthesis, partial/incomplete source, multi-source authority hierarchy with temporal supersession, and an adversarial scenario where the source contradicts well-known facts.
+
+The Liminate interpreter gate — `cite "<text>" from <source>` verified via runtime substring check — was active on 101 of those turns. It never fired. The models prefer to omit a citation rather than fabricate one. The gate is a working safety net waiting for the case the instruction fails to prevent.
+
+### Where session contracts add value
+
+- Sessions that span multiple turns or multiple sessions where the source won't be present later
+- Tracking what was verified versus inferred
+- Accumulating decisions as locked, open, or deferred
+- Acting on facts established in earlier sessions without re-providing the source
+
+### Where they don't
+
+On coding tasks, the [Karpathy CLAUDE.md](https://github.com/multica-ai/andrej-karpathy-skills) (132k stars) outperforms session contracts — 2.38 vs 2.00 overall on a head-to-head bench with 8 tasks across 4 failure modes (wrong assumptions, overcomplication, orthogonal edits, unverified execution). Karpathy wins on catching wrong assumptions (3.00 vs 2.00); the two skills tie at ceiling on overcomplication and orthogonal edits; both fail on unverified execution.
+
+Session contracts and Karpathy-style instruction sets solve different problems. One enforces cross-session continuity through executable constraints. The other enforces coding discipline through natural-language principles. A user who needs both uses both.
+
 ## Install
 
 This skill follows the [agentskills.io](https://agentskills.io) SKILL.md standard. Any compliant agent can load it.
@@ -57,28 +80,43 @@ Ask the agent to start a contract at the beginning of a session:
 
 > "Start a session contract for this design review."
 
-The agent copies the template, names the variables for the session at hand, and updates the file as the session moves:
+The agent responds in two channels. Channel 1 is the prose answer — the work itself. Channel 2 is a fenced `limn` code block at the end of the response containing only contract mutations. The prose never narrates contract updates; the contract block never contains prose.
 
-- new decisions get appended to `tracked-decisions`
-- new questions get appended to `open-questions`
-- `source-state` flips from `unscanned` to `scanned` to `verified` as sources are actually read
+Before any consequential claim, the contract block should contain a `cite` verifying the claim text exists in the source. If the text isn't there, the agent discloses the claim as inferred.
 
-Before any consequential claim, the agent checks the contract. If the claim is inferred and the source is not verified, the agent says so before stating the claim.
+At the end of the session, the accumulated `.limn` file is yours. Save it, diff it, hand it to another agent, run it through the interpreter.
 
 When the user corrects the model's approach — "don't defer," "check the actual code," "give me everything" — the correction is recorded in the contract as a session correction. The model consults the corrections list before every subsequent response. Corrections persist across sessions: the next model that reads the contract starts with the calibration already applied.
 
 At the end of the session, the `.limn` file is yours. Save it, diff it, hand it to another agent.
 
-## Tiers
+## The session pack
 
-The skill runs at whatever tier the host supports. It does not fail at lower tiers.
+The session pack adds 5 domain words to Liminate's 35-word base vocabulary:
+
+| Word | Type | What it does |
+|------|------|-------------|
+| `claim` | noun | Descriptor for verified or inferred assertions |
+| `source` | noun | Descriptor for primary sources |
+| `decision` | noun | Descriptor for locked or open decisions |
+| `cite` | verb | `cite <text> from <source>` — runtime substring check, errors if the text isn't in the source |
+| `verify` | verb | `verify <claim> from <source>` — structural comparison, flags match/mismatch with divergence details |
+
+Load the pack:
+
+```bash
+liminate contract.limn --pack references/session_pack.json
+```
+
+`cite` is the constraining primitive. The interpreter checks whether the cited text actually appears in the source. The model doesn't declare verification — the interpreter verifies it.
+
+## Tiers
 
 | Tier | Available | Behavior |
 |------|-----------|----------|
-| 1 | Conversation only | Hold the contract in the chat. Render it on request. |
-| 2 | File tools | Write the contract to disk. Update it in place. |
-| 3 | Liminate installed | Run the file through the interpreter after each update. Fix parse errors. |
-| 4 | Persistent storage | Keep contracts across sessions so prior decisions inform later ones. |
+| 1 | Conversation only | Emit contract delta as `limn` code block in each response. |
+| 2 | File tools + Liminate installed | Write the contract to disk. Run each delta through the interpreter. |
+| 3 | Persistent storage + session pack | Load the session pack. Use `cite` and `verify`. Persist across sessions. |
 
 ## About Liminate
 
@@ -88,20 +126,15 @@ The skill runs at whatever tier the host supports. It does not fail at lower tie
 - PyPI: <https://pypi.org/project/liminate/>
 - Vocabulary: [`references/vocabulary_quick_reference.md`](references/vocabulary_quick_reference.md)
 
-A session contract is not a Liminate-only artifact — the file is plain prose either way. But running the interpreter against it catches typos and stale references before they spread.
-
-## Roadmap
-
-| Phase | Status | What |
-|-------|--------|------|
-| 1 | shipped | This skill. Session contracts as a portable SKILL.md, running at four tiers. |
-| 2 | shipped | A session pack (`references/session_pack.json`) adding `claim`, `source`, `decision` as nouns and `cite` / `verify` as verbs. `cite <text> from <source>` is a substring check that errors on miss; `verify <claim> from <source>` is a structural comparison that flags `verification-status` and `verification-divergences`. Load with `liminate --pack references/session_pack.json <contract>.limn`. The `drift` noun was removed — drift is now visible through `verify` + a `when verification-status` handler. |
-| 3 | planned | Organizations writing operational knowledge as live `.limn` programs. |
-| 4 | planned | A runtime where concepts are addressable, versions are semantic, and relationships are queryable. |
-
 ## Known limitations
 
-**Sonnet 4.6 hard-prior regression.** On hard-prior single-turn tasks (source contradicts training), the v1 skill showed +2/9 fabrication versus baseline when Sonnet graded itself. Independent judging (Opus 4.7 grading the same Sonnet outputs) found 0/9 fabrication — the v1 regression was substantially a self-grading artifact. The v2 skill (two-channel protocol) shows a real +2/9 regression against an independent judge on one task (`hard-lacuna-3`), caused by a `cite` whose text was not in the source. The interpreter gate (running `liminate` against each turn's delta) is designed to catch this: the `cite` would have errored, and the model could have revised. Pending v3 bench results with the gate active.
+**Citation engagement varies by model and scenario.** Opus 4.7 emits few or no `cite` statements in contracts; Sonnet 4.6 engages selectively, primarily on multi-source scenarios with explicit structure. Retrieval rate (recovering facts from the contract in later sessions) ranges from 0% (Opus) to 35% (Sonnet). Fabrication rate is zero regardless. When the model doesn't cite, it discloses — the correct failure mode, but it caps the contract's usefulness as a retrieval mechanism.
+
+**Hard-prior single-turn tasks show small regressions.** On tasks where the source contradicts the model's training data, the skill condition shows +1-3 fabrications versus baseline (n=9 per round, varies by round and task). The absolute numbers are small and shift between tasks across rounds. The interpreter gate is designed to catch these but requires the model to emit a contract delta, which single-turn Q&A tasks typically don't produce.
+
+**Cross-agent portability is untested.** The skill has been benchmarked on Claude models only. Codex, Gemini, and Copilot have not been tested. The two-channel protocol depends on the host rendering fenced `limn` code blocks in the response.
+
+**The gate's catch behavior is unmeasured.** Across 101 gated turns, the interpreter gate never fired — both models prefer omitting a `cite` to fabricating one. The gate is correctly designed infrastructure but its revision path (surface error → model fixes) has not been exercised by real model behavior.
 
 ## License
 
