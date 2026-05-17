@@ -1,5 +1,5 @@
 ---
-name: session-contracts
+name: liminate-session-contracts
 description: >-
   Reasoning scaffolds for LLM working sessions. Creates and maintains
   session contracts — structured .limn files that track verified vs.
@@ -209,14 +209,14 @@ The contract is the right place for them because:
 - They persist across turns (unlike conversational memory, which decays)
 - They travel to the next session (the contract file carries them)
 - They travel to the next model (another agent reading the `.limn` file sees them)
-- The heap pager should never evict them (they are the highest-value signal in the session)
-- The intent compiler can read them to calibrate response depth and posture
+- The context pager should never evict them (they are the highest-value signal in the session)
+- The prompt compiler can read them to calibrate response depth and posture
 
 ### Cross-coordination with the prosecode stack
 
 Session corrections are the engagement calibration layer that connects the three prosecode tools into a complete pipeline. Each tool reads corrections differently:
 
-**prosecode-intent-compiler.** The intent compiler maps user prompts to verb + slot IR (explain, create, transform, analyze, decide, plan, fix). Active corrections modify how the IR shapes the response:
+**prosecode-prompt-compiler.** The prompt compiler maps user prompts to verb + slot IR (explain, create, transform, analyze, decide, plan, fix). Active corrections modify how the IR shapes the response:
 
 | Active correction | Effect on intent IR |
 |---|---|
@@ -228,13 +228,13 @@ Session corrections are the engagement calibration layer that connects the three
 | `be-direct` | All verbs set preamble=none, hedging=none. Conclusions first. |
 | `execute-dont-propose` | `create`, `transform`, `fix` verbs proceed directly. No proposal step. |
 
-The intent compiler doesn't need to implement these as hard-coded rules. It reads `session-corrections` from the contract and adjusts its IR accordingly — the corrections are the calibration signal the compiler was missing.
+The prompt compiler doesn't need to implement these as hard-coded rules. It reads `session-corrections` from the contract and adjusts its IR accordingly — the corrections are the calibration signal the compiler was missing.
 
-**prosecode-heap-pager.** The heap pager scores history blocks for retain/page/evict. Corrections affect scoring:
+**prosecode-context-pager.** The context pager scores history blocks for retain/page/evict. Corrections affect scoring:
 
 - **Blocks containing `add ... to session-corrections` statements get automatic `retain` status.** Corrections are the highest-value signal in a session. They must never be paged or evicted. A model that forgets a correction will repeat the failure it corrects.
-- **When `consult-prior-context` is active, historical blocks from prior sessions get higher retention scores.** The pager's alpha (relevance) weight increases for blocks that overlap with the current intent AND contain facts from earlier sessions.
-- **When `verify-against-source-not-memory` is active, source blocks get higher retention scores.** The pager preserves source material at higher priority, reducing the chance the model falls back to training data.
+- **When `consult-prior-context` is active, historical blocks from prior sessions get higher retention scores.** The context pager's alpha (relevance) weight increases for blocks that overlap with the current intent AND contain facts from earlier sessions.
+- **When `verify-against-source-not-memory` is active, source blocks get higher retention scores.** The context pager preserves source material at higher priority, reducing the chance the model falls back to training data.
 
 **Liminate language.** Corrections use only the base 35-word vocabulary (`add`, `remember`, `when`, `show`). No pack extension needed. No new verbs. The mechanism is a list, a `when` handler, and the model's own consultation discipline. This is deliberate: corrections should work at Tier 1 (conversation only) with no interpreter, no pack, no file tools. The simplest tier gets the full correction mechanism.
 
