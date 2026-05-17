@@ -1,0 +1,93 @@
+show "=== Session contract: template ==="
+
+remember a source called primary-source with "paste the verbatim source text here"
+remember a claim called working-claim with "paste the claim text being verified here"
+
+remember a string called source-state with "unscanned"
+remember a string called claim-basis with "none"
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+remember a number called decision-count with 0
+
+remember how to disclose from status: show status
+remember how to summarize from label: count label
+
+when source-state is equal to "unscanned"
+  show "HOLD: source not yet scanned — verify before consequential claims"
+
+when claim-basis is equal to "inference" unless source-state is equal to "verified"
+  show "WARNING: current claims are inferred, not verified against source"
+
+when claim-basis is equal to "verified"
+  show "OK: claims grounded in verified source"
+
+show "--- state snapshot ---"
+show source-state
+show claim-basis
+show tracked-decisions
+show open-questions
+
+show "--- how to cite the source before a consequential claim ---"
+show "write your own statement of the form: cite <exact substring from your source> from <your-source-name>"
+show "the substring must be present in the source text or the interpreter will error"
+
+show "--- example: accumulating decisions and questions ---"
+add "decision-architecture-three-layer" to tracked-decisions
+add "decision-vocab-bounded-35" to tracked-decisions
+add "question-pack-loader-design" to open-questions
+show tracked-decisions
+show open-questions
+summarize from tracked-decisions
+
+show "--- example: routing on verification status ---"
+choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
+
+disclose from claim-basis
+
+show "=== Session contract: Halverson & Roy 2025 — Edge Cache Routing ==="
+
+remember a source called halverson-roy with "We evaluated four routing policies (greedy-nearest, weighted-RTT, consistent-hash, and learned-policy) across a 14-node multi-region deployment over 90 days. The learned-policy reduced p99 tail latency by 38.4% relative to greedy-nearest at the cost of a 12% increase in median CPU on routing nodes. Cache hit rates improved from 71.2% (greedy-nearest baseline) to 83.6% (learned-policy). Failover-recovery time was unchanged across all four policies (median 1.7s, p99 4.2s). The study was funded by the Edge Systems Consortium grant ESC-2024-31 and the dataset is published under CC-BY at edge-cache-data.org/halverson-roy-2025."
+
+remember a string called source-state with "verified"
+remember a string called claim-basis with "verified"
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+remember a number called decision-count with 0
+
+remember how to disclose from status: show status
+remember how to summarize from label: count label
+
+cite "four routing policies (greedy-nearest, weighted-RTT, consistent-hash, and learned-policy)" from halverson-roy
+cite "14-node multi-region deployment over 90 days" from halverson-roy
+cite "learned-policy reduced p99 tail latency by 38.4% relative to greedy-nearest" from halverson-roy
+cite "12% increase in median CPU on routing nodes" from halverson-roy
+cite "Cache hit rates improved from 71.2% (greedy-nearest baseline) to 83.6% (learned-policy)" from halverson-roy
+cite "Failover-recovery time was unchanged across all four policies (median 1.7s, p99 4.2s)" from halverson-roy
+cite "funded by the Edge Systems Consortium grant ESC-2024-31" from halverson-roy
+cite "dataset is published under CC-BY at edge-cache-data.org/halverson-roy-2025" from halverson-roy
+
+add "finding-learned-policy-best-latency" to tracked-decisions
+add "finding-cpu-tradeoff-12pct" to tracked-decisions
+add "finding-cache-hit-rate-83pct" to tracked-decisions
+add "finding-failover-unchanged" to tracked-decisions
+
+add "question-weighted-RTT-and-consistent-hash-results-not-reported-in-abstract" to open-questions
+add "question-learned-policy-architecture-not-described" to open-questions
+add "question-cpu-cost-acceptable-in-production" to open-questions
+
+when source-state is equal to "verified"
+  show "OK: claims grounded in verified source"
+
+when claim-basis is equal to "verified"
+  show "OK: all citations checked against halverson-roy source text"
+
+show "--- state snapshot ---"
+show source-state
+show claim-basis
+show tracked-decisions
+show open-questions
+
+disclose from claim-basis
+
+add "decision-hypothesis-comparison-learned-policy-p99-supported-cpu-cost-overstated" to tracked-decisions
+add "question-cpu-headroom-on-routing-nodes-in-target-deployment" to open-questions

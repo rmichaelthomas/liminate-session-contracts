@@ -1,0 +1,59 @@
+show "=== Session contract: template ==="
+
+remember a source called primary-source with "paste the verbatim source text here"
+remember a claim called working-claim with "paste the claim text being verified here"
+
+remember a string called source-state with "unscanned"
+remember a string called claim-basis with "none"
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+remember a number called decision-count with 0
+
+remember how to disclose from status: show status
+remember how to summarize from label: count label
+
+when source-state is equal to "unscanned"
+  show "HOLD: source not yet scanned — verify before consequential claims"
+
+when claim-basis is equal to "inference" unless source-state is equal to "verified"
+  show "WARNING: current claims are inferred, not verified against source"
+
+when claim-basis is equal to "verified"
+  show "OK: claims grounded in verified source"
+
+show "--- state snapshot ---"
+show source-state
+show claim-basis
+show tracked-decisions
+show open-questions
+
+show "--- how to cite the source before a consequential claim ---"
+show "write your own statement of the form: cite <exact substring from your source> from <your-source-name>"
+show "the substring must be present in the source text or the interpreter will error"
+
+show "--- example: accumulating decisions and questions ---"
+add "decision-architecture-three-layer" to tracked-decisions
+add "decision-vocab-bounded-35" to tracked-decisions
+add "question-pack-loader-design" to open-questions
+show tracked-decisions
+show open-questions
+summarize from tracked-decisions
+
+show "--- example: routing on verification status ---"
+choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
+
+disclose from claim-basis
+
+remember a string called source-state with "unscanned"
+remember a string called claim-basis with "inference"
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+
+add "decision-retry-429-uses-retry-after-not-backoff" to tracked-decisions
+add "decision-retry-5xx-uses-truncated-exponential-backoff-with-jitter" to tracked-decisions
+add "decision-retry-budget-3-for-ratelimit-4-for-transient" to tracked-decisions
+add "decision-retry-after-absent-default-5s" to tracked-decisions
+add "decision-retry-log-level-debug" to tracked-decisions
+add "decision-backoff-base-500ms-cap-30s-jitter-20pct" to tracked-decisions
+add "question-kestrel-retry-after-header-format-confirmed" to open-questions
+add "question-per-client-budget-scope-connection-or-token" to open-questions

@@ -1,0 +1,97 @@
+show "=== Session contract: template ==="
+
+remember a source called primary-source with "paste the verbatim source text here"
+remember a claim called working-claim with "paste the claim text being verified here"
+
+remember a string called source-state with "unscanned"
+remember a string called claim-basis with "none"
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+remember a number called decision-count with 0
+
+remember how to disclose from status: show status
+remember how to summarize from label: count label
+
+when source-state is equal to "unscanned"
+  show "HOLD: source not yet scanned — verify before consequential claims"
+
+when claim-basis is equal to "inference" unless source-state is equal to "verified"
+  show "WARNING: current claims are inferred, not verified against source"
+
+when claim-basis is equal to "verified"
+  show "OK: claims grounded in verified source"
+
+show "--- state snapshot ---"
+show source-state
+show claim-basis
+show tracked-decisions
+show open-questions
+
+show "--- how to cite the source before a consequential claim ---"
+show "write your own statement of the form: cite <exact substring from your source> from <your-source-name>"
+show "the substring must be present in the source text or the interpreter will error"
+
+show "--- example: accumulating decisions and questions ---"
+add "decision-architecture-three-layer" to tracked-decisions
+add "decision-vocab-bounded-35" to tracked-decisions
+add "question-pack-loader-design" to open-questions
+show tracked-decisions
+show open-questions
+summarize from tracked-decisions
+
+show "--- example: routing on verification status ---"
+choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
+
+disclose from claim-basis
+
+show "=== Session contract: Kestrel integration design session ==="
+
+remember a source called kestrel-transport with "Project Kestrel API spec v0.4 (frozen 2026-04-12). Version: 0.4.2. Base URL: https://api.kestrel.internal/v0. Auth: bearer JWT, RS256, 15-minute expiry, refresh via /auth/refresh. Rate limits: 240 requests/minute per project token (burst 30/sec). Hard ceiling at 5,000 requests/hour. Returns 429 with Retry-After header (seconds)."
+
+remember a source called kestrel-payload with "Payload schema: 17 top-level fields. Required: id (UUID v7), tenant_id, created_at (RFC 3339), event_type. Optional: 13 others. Maximum payload size: 256 KiB. Idempotency: clients SHOULD send Idempotency-Key header (UUID v4). Server retains keys for 24h. Webhooks: outbound POSTs sign HMAC-SHA256 with X-Kestrel-Signature; signing secret rotates every 90 days. Decided 2026-04-12 by the platform team: ship v0 with these limits; revisit rate caps after first 500 customers onboard."
+
+remember a string called source-state with "verified"
+remember a string called claim-basis with "verified"
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+remember a number called decision-count with 0
+
+cite "Version: 0.4.2" from kestrel-transport
+cite "Base URL: https://api.kestrel.internal/v0" from kestrel-transport
+cite "bearer JWT, RS256, 15-minute expiry, refresh via /auth/refresh" from kestrel-transport
+cite "240 requests/minute per project token (burst 30/sec)" from kestrel-transport
+cite "Hard ceiling at 5,000 requests/hour" from kestrel-transport
+cite "Returns 429 with Retry-After header (seconds)" from kestrel-transport
+cite "17 top-level fields" from kestrel-payload
+cite "Required: id (UUID v7), tenant_id, created_at (RFC 3339), event_type" from kestrel-payload
+cite "Maximum payload size: 256 KiB" from kestrel-payload
+cite "Idempotency-Key header (UUID v4)" from kestrel-payload
+cite "Server retains keys for 24h" from kestrel-payload
+cite "HMAC-SHA256 with X-Kestrel-Signature" from kestrel-payload
+cite "signing secret rotates every 90 days" from kestrel-payload
+cite "Decided 2026-04-12 by the platform team: ship v0 with these limits; revisit rate caps after first 500 customers onboard" from kestrel-payload
+
+add "platform-decision-ship-v0-limits-revisit-at-500-customers" to tracked-decisions
+add "question-rate-limit-interaction-effects-for-traffic-shape" to open-questions
+add "question-hmac-secret-rotation-operational-answer" to open-questions
+
+remember how to disclose from status: show status
+remember how to summarize from label: count label
+
+when source-state is equal to "verified"
+  show "OK: both Kestrel sources scanned and cited"
+
+when claim-basis is equal to "verified"
+  show "OK: claims grounded in verified source"
+
+show "--- state snapshot ---"
+show source-state
+show claim-basis
+show tracked-decisions
+show open-questions
+
+add "decision-retry-on-429-use-retry-after-header-not-fixed-backoff" to tracked-decisions
+add "decision-exponential-backoff-jitter-for-5xx-and-timeouts-only" to tracked-decisions
+add "decision-max-3-retry-attempts-before-terminal-error" to tracked-decisions
+add "decision-idempotency-key-generated-once-reused-across-retries" to tracked-decisions
+add "question-hourly-quota-tracking-shared-state-or-per-instance" to open-questions
