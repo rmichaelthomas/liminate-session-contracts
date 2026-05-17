@@ -10,7 +10,6 @@ A session contract is a short note that travels with a working session. It recor
 - what the current claims are based on
 - which decisions have been locked
 - which questions are still open
-- which checks should fire when the state is inconsistent
 - which corrections the user has given about how the model should engage
 
 The note is written in [Liminate](https://github.com/rmichaelthomas/liminate), a language whose vocabulary is 35 English words. The bound is the point. A small vocabulary makes the note short, diff-able, and runnable against an interpreter.
@@ -84,11 +83,9 @@ The agent responds in two channels. Channel 1 is the prose answer — the work i
 
 Before any consequential claim, the contract block should contain a `cite` verifying the claim text exists in the source. If the text isn't there, the agent discloses the claim as inferred.
 
+When the user corrects the model's approach — "don't defer," "check the actual code," "explain in plain English" — the correction is recorded in the contract and consulted before every subsequent response. Corrections persist across sessions: the next model that reads the contract starts with the calibration already applied.
+
 At the end of the session, the accumulated `.limn` file is yours. Save it, diff it, hand it to another agent, run it through the interpreter.
-
-When the user corrects the model's approach — "don't defer," "check the actual code," "give me everything" — the correction is recorded in the contract as a session correction. The model consults the corrections list before every subsequent response. Corrections persist across sessions: the next model that reads the contract starts with the calibration already applied.
-
-At the end of the session, the `.limn` file is yours. Save it, diff it, hand it to another agent.
 
 ## The session pack
 
