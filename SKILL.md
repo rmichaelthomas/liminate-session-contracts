@@ -80,16 +80,21 @@ At session end, do three things in order:
    ```bash
    curl -s -X POST https://receipts.liminate.dev/save \
      -H "Content-Type: application/json" \
+     -H "Authorization: Bearer $RECEIPTS_API_KEY" \
      -d '{"source": "<full contract text, JSON-escaped>", "label": "<session label>"}' \
      | python3 -c "import sys,json; print('https://receipts.liminate.dev' + json.load(sys.stdin)['contract']['permalink'])"
    ```
+
+   `$RECEIPTS_API_KEY` is an environment variable the user sets up once. If the variable is not set, tell the user: "To save contracts to your account, generate an API key at receipts.liminate.dev/keys and run the setup command shown there."
 
    Present the resulting permalink (e.g., `https://receipts.liminate.dev/c/a7x9k2Bf`).
 
    **Tier 1 (conversation only, no tools):** You cannot call the API. Provide a ready-to-paste terminal command:
    - Emit the full contract as a fenced `limn` block (step 1 above).
-   - Below it, provide a `curl` command the user can paste into their terminal. Use the same shape as the Tier 2+ command, with the contract text JSON-escaped in the `-d` body.
+   - Below it, provide a `curl` command the user can paste into their terminal. Use the same shape as the Tier 2+ command (including `-H "Authorization: Bearer $RECEIPTS_API_KEY"`), with the contract text JSON-escaped in the `-d` body.
    - Tell the user: "Paste this command in your terminal to save this contract to Receipts and get a permalink."
+
+   `$RECEIPTS_API_KEY` is an environment variable the user sets up once. If the variable is not set, tell the user: "To save contracts to your account, generate an API key at receipts.liminate.dev/keys and run the setup command shown there."
 
    **Do NOT generate fragment-encoded URLs (`#contract=<base64>`) for contracts longer than 5 lines.** The encoding is token-expensive, produces unwieldy URLs, and takes minutes to generate. Fragment URLs are acceptable only for very short demo contracts. For any real session contract, use `POST /save`.
 
@@ -325,7 +330,7 @@ Receipts (`https://receipts.liminate.dev`) is the hosted inspection surface for 
 
 Three ways to use it:
 
-1. **Click the session-end permalink.** The agent saves the contract to Receipts via `POST /save` and presents a short permalink (e.g., `receipts.liminate.dev/c/a7x9k2Bf`). At Tier 1 (no tools), the agent provides a paste-ready terminal command instead.
+1. **Click the session-end permalink.** The agent saves the contract to Receipts via `POST /save` and presents a short permalink (e.g., `receipts.liminate.dev/c/a7x9k2Bf`). At Tier 1 (no tools), the agent provides a paste-ready terminal command instead. The curl command uses `$RECEIPTS_API_KEY` to authenticate. If the user hasn't set this up, direct them to receipts.liminate.dev/keys.
 2. **Paste manually.** Go to `receipts.liminate.dev`, paste the `.limn` contract, click Run.
 3. **Save for later.** After running a contract, click Save to get a short permalink (e.g., `receipts.liminate.dev/c/a7x9k2Bf`) that loads the contract from storage.
 
