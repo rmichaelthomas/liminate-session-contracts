@@ -43,3 +43,17 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "question-recover-yesterday-workstream-context" to open-questions
+add "question-four-workstream-names-and-status" to open-questions
+remember a string called claim-basis with "none"
+
+add "question-workstream-a-ingest-sustained-throughput" to open-questions
+
+add "question-workstream-b-query-api-p95-latency" to open-questions
+
+add "question-admin-console-screens-live-in-staging" to open-questions
+add "question-does-admin-console-map-to-known-workstream" to open-questions
+
+add "question-workstream-d-billing-integration-status-and-metrics" to open-questions
+add "question-confirm-workstream-d-exists-and-is-billing" to open-questions

@@ -43,3 +43,9 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "decision-retry-honor-retry-after-header" to tracked-decisions
+add "decision-retry-fallback-truncated-exponential-backoff-500ms-cap-30s-jitter-20pct" to tracked-decisions
+add "decision-retry-circuit-breaker-three-consecutive-429s" to tracked-decisions
+add "decision-retry-propagate-trace-context" to tracked-decisions
+remember a string called claim-basis with "inference"

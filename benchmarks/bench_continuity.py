@@ -104,6 +104,18 @@ class ProbeResult:
 
 
 @dataclass
+class GateEvent:
+    """Records one gate check on a per-turn delta."""
+    turn_label: str            # e.g. "session-1", "session-2", "session-3.probe-rate-limit"
+    tripped: bool              # interpreter errored on the accumulated contract
+    cite_trip: bool            # the error was a `cite` substring miss (vs parse error)
+    revised: bool              # the model was given one revision attempt
+    revision_passed: bool      # the revision (if any) passed the interpreter
+    initial_error: str
+    final_error: str           # blank if final state passes
+
+
+@dataclass
 class ScenarioResult:
     scenario_id: str
     run: int
@@ -115,6 +127,7 @@ class ScenarioResult:
     add_count: int
     remember_count: int
     probes: list[ProbeResult] = field(default_factory=list)
+    gate_events: list[GateEvent] = field(default_factory=list)
     total_input_tokens: int = 0
     total_output_tokens: int = 0
     total_cache_read: int = 0
@@ -193,6 +206,85 @@ def check_contract_fidelity(contract_text: str, tmpdir: Path) -> tuple[bool, str
         return False, f"liminate invocation failed: {e}"
 
 
+def _is_cite_error(err: str) -> bool:
+    """Heuristic: is this gate failure caused by a `cite` substring miss?"""
+    s = err.lower()
+    return ("cite" in s) or ("not found in source" in s) or ("substring" in s)
+
+
+def gate_check_and_maybe_revise(
+    client: anthropic.Anthropic,
+    model: str,
+    accumulated_before: str,
+    new_delta: str,
+    turn_label: str,
+    revision_context_msgs: list[dict],
+    tmpdir: Path,
+    usage_acc: dict,
+) -> tuple[str, GateEvent]:
+    """Append `new_delta` to `accumulated_before`, run the interpreter, and on
+    failure give the model exactly one chance to revise the delta.
+
+    Returns (accumulated_after, event). On final failure the failing delta is
+    dropped — accumulated_after equals accumulated_before.
+
+    `revision_context_msgs` is the message history leading up to the failing
+    turn (so the revision call has the same context). `usage_acc` is mutated
+    with any extra token usage from the revision call.
+    """
+    candidate = (accumulated_before.rstrip() + "\n\n" + new_delta).strip() if new_delta else accumulated_before
+    ok, err = check_contract_fidelity(candidate, tmpdir)
+    if ok:
+        return candidate, GateEvent(
+            turn_label=turn_label, tripped=False, cite_trip=False,
+            revised=False, revision_passed=False, initial_error="", final_error="",
+        )
+
+    # Gate tripped. Surface the error to the model for one revision attempt.
+    revise_user_msg = (
+        f"The Liminate interpreter found an error in your contract delta:\n\n"
+        f"{err}\n\n"
+        f"Please revise your contract delta to fix this error. Emit ONLY the corrected "
+        f"`limn` block (no prose). If the error is a `cite` whose text is not actually "
+        f"in the source, drop that `cite` and instead `remember` the fact as inferred."
+    )
+    messages = list(revision_context_msgs) + [{"role": "user", "content": revise_user_msg}]
+    try:
+        revised_text, u = call(client, model, messages)
+    except Exception as e:
+        return accumulated_before, GateEvent(
+            turn_label=turn_label, tripped=True, cite_trip=_is_cite_error(err),
+            revised=False, revision_passed=False,
+            initial_error=err[:500], final_error=f"revision call failed: {e}",
+        )
+    usage_acc["input"] += u.input_tokens
+    usage_acc["output"] += u.output_tokens
+    usage_acc["cache_read"] += getattr(u, "cache_read_input_tokens", 0) or 0
+    usage_acc["cache_creation"] += getattr(u, "cache_creation_input_tokens", 0) or 0
+
+    revised_delta = extract_limn_block(revised_text)
+    if not revised_delta:
+        return accumulated_before, GateEvent(
+            turn_label=turn_label, tripped=True, cite_trip=_is_cite_error(err),
+            revised=True, revision_passed=False,
+            initial_error=err[:500], final_error="revision produced no `limn` block",
+        )
+
+    revised_candidate = (accumulated_before.rstrip() + "\n\n" + revised_delta).strip()
+    ok2, err2 = check_contract_fidelity(revised_candidate, tmpdir)
+    if ok2:
+        return revised_candidate, GateEvent(
+            turn_label=turn_label, tripped=True, cite_trip=_is_cite_error(err),
+            revised=True, revision_passed=True,
+            initial_error=err[:500], final_error="",
+        )
+    return accumulated_before, GateEvent(
+        turn_label=turn_label, tripped=True, cite_trip=_is_cite_error(err),
+        revised=True, revision_passed=False,
+        initial_error=err[:500], final_error=err2[:500],
+    )
+
+
 def count_verbs(contract: str) -> dict[str, int]:
     counts = {"cite": 0, "verify": 0, "add": 0, "remember": 0}
     for line in contract.splitlines():
@@ -204,9 +296,26 @@ def count_verbs(contract: str) -> dict[str, int]:
     return counts
 
 
-def run_scenario(client: anthropic.Anthropic, judge_client_model: str, model: str, scenario: dict, run_idx: int, tmpdir: Path) -> ScenarioResult:
+def run_scenario(client: anthropic.Anthropic, judge_client_model: str, model: str, scenario: dict, run_idx: int, tmpdir: Path, gate: bool = False) -> ScenarioResult:
     started = time.monotonic()
-    total_in = total_out = total_cr = total_cc = 0
+    usage = {"input": 0, "output": 0, "cache_read": 0, "cache_creation": 0}
+    gate_events: list[GateEvent] = []
+
+    def acc_usage(u):
+        usage["input"] += u.input_tokens
+        usage["output"] += u.output_tokens
+        usage["cache_read"] += getattr(u, "cache_read_input_tokens", 0) or 0
+        usage["cache_creation"] += getattr(u, "cache_creation_input_tokens", 0) or 0
+
+    def maybe_gate(accumulated_before: str, delta: str, turn_label: str, history: list[dict]) -> str:
+        if not gate or not delta:
+            new_acc = (accumulated_before.rstrip() + "\n\n" + delta).strip() if delta else accumulated_before
+            return new_acc
+        new_acc, event = gate_check_and_maybe_revise(
+            client, model, accumulated_before, delta, turn_label, history, tmpdir, usage,
+        )
+        gate_events.append(event)
+        return new_acc
 
     # ---- Session 1: source + start contract ----
     s1 = scenario["session_1"]
@@ -215,44 +324,52 @@ def run_scenario(client: anthropic.Anthropic, judge_client_model: str, model: st
         f"STARTING TEMPLATE (use as the contract base):\n```limn\n{TEMPLATE}```\n\n"
         f"{s1['user_message']}"
     )
-    text1, u = call(client, model, [{"role": "user", "content": user1}])
-    total_in += u.input_tokens
-    total_out += u.output_tokens
-    total_cr += getattr(u, "cache_read_input_tokens", 0) or 0
-    total_cc += getattr(u, "cache_creation_input_tokens", 0) or 0
+    msgs1 = [{"role": "user", "content": user1}]
+    text1, u = call(client, model, msgs1)
+    acc_usage(u)
     delta1 = extract_limn_block(text1)
-    accumulated = (TEMPLATE.rstrip() + "\n\n" + delta1).strip() if delta1 else TEMPLATE.strip()
+    base = TEMPLATE.strip()
+    history1 = msgs1 + [{"role": "assistant", "content": text1}]
+    accumulated = maybe_gate(base, delta1, "session-1", history1)
 
-    # ---- Session 2: no source, prior contract ----
+    # ---- Session 2: optional new source, prior contract ----
     s2 = scenario["session_2"]
+    s2_source_block = f"NEW SOURCE FOR THIS SESSION:\n{s2['source']}\n\n" if s2.get("source") else ""
     user2 = (
         f"PRIOR SESSION CONTRACT (accumulated across previous sessions):\n```limn\n{accumulated}\n```\n\n"
+        f"{s2_source_block}"
         f"{s2['user_message']}"
     )
-    text2, u = call(client, model, [{"role": "user", "content": user2}])
-    total_in += u.input_tokens
-    total_out += u.output_tokens
-    total_cr += getattr(u, "cache_read_input_tokens", 0) or 0
-    total_cc += getattr(u, "cache_creation_input_tokens", 0) or 0
+    msgs2 = [{"role": "user", "content": user2}]
+    text2, u = call(client, model, msgs2)
+    acc_usage(u)
     delta2 = extract_limn_block(text2)
-    if delta2:
-        accumulated = (accumulated.rstrip() + "\n\n" + delta2).strip()
+    history2 = msgs2 + [{"role": "assistant", "content": text2}]
+    accumulated = maybe_gate(accumulated, delta2, "session-2", history2)
 
     # ---- Session 3: probe questions, no source ----
     s3 = scenario["session_3"]
     probes: list[ProbeResult] = []
+    # Build a combined-source string for the judge (so it can validate facts from
+    # any session's source, not just session 1's).
+    judge_source = s1["source"]
+    if s2.get("source"):
+        judge_source = judge_source + "\n\n---\n\n" + s2["source"]
+
     for probe in s3["probe_questions"]:
         user3 = (
             f"PRIOR SESSION CONTRACT (accumulated across previous sessions):\n```limn\n{accumulated}\n```\n\n"
             f"No source document is attached. Answer from the contract only. If the contract does not contain the answer, say so plainly.\n\n"
             f"QUESTION: {probe['question']}"
         )
-        text3, u = call(client, model, [{"role": "user", "content": user3}])
-        total_in += u.input_tokens
-        total_out += u.output_tokens
-        total_cr += getattr(u, "cache_read_input_tokens", 0) or 0
-        total_cc += getattr(u, "cache_creation_input_tokens", 0) or 0
-        bucket = judge(client, judge_client_model, probe["question"], s1["source"], accumulated, text3)
+        msgs3 = [{"role": "user", "content": user3}]
+        text3, u = call(client, model, msgs3)
+        acc_usage(u)
+        # Probe-turn deltas (if any) also go through the gate when --gate is on.
+        delta3 = extract_limn_block(text3)
+        history3 = msgs3 + [{"role": "assistant", "content": text3}]
+        accumulated = maybe_gate(accumulated, delta3, f"session-3.{probe['id']}", history3)
+        bucket = judge(client, judge_client_model, probe["question"], judge_source, accumulated, text3)
         probes.append(ProbeResult(
             scenario_id=scenario["id"],
             probe_id=probe["id"],
@@ -277,10 +394,11 @@ def run_scenario(client: anthropic.Anthropic, judge_client_model: str, model: st
         add_count=counts["add"],
         remember_count=counts["remember"],
         probes=probes,
-        total_input_tokens=total_in,
-        total_output_tokens=total_out,
-        total_cache_read=total_cr,
-        total_cache_creation=total_cc,
+        gate_events=gate_events,
+        total_input_tokens=usage["input"],
+        total_output_tokens=usage["output"],
+        total_cache_read=usage["cache_read"],
+        total_cache_creation=usage["cache_creation"],
         latency_s=time.monotonic() - started,
     )
 
@@ -336,6 +454,23 @@ def print_report(results: list[ScenarioResult]) -> None:
         if not r.contract_parse_ok:
             print(f"  [parse fail] {r.scenario_id} run={r.run}: {r.contract_parse_error}")
 
+    all_events = [e for r in results for e in r.gate_events]
+    if all_events:
+        print("\nGATE METRICS")
+        n_turns = len(all_events)
+        trips = [e for e in all_events if e.tripped]
+        cite_trips = [e for e in trips if e.cite_trip]
+        revisions = [e for e in trips if e.revised]
+        passed_revisions = [e for e in revisions if e.revision_passed]
+        print(f"  total turns gated:        {n_turns}")
+        print(f"  gate trip rate:           {pct(len(trips), n_turns)}  ({len(trips)}/{n_turns})")
+        print(f"  `cite` trip rate (of trips): {pct(len(cite_trips), len(trips)) if trips else '—'}  ({len(cite_trips)}/{len(trips)})")
+        print(f"  revision success rate:    {pct(len(passed_revisions), len(revisions)) if revisions else '—'}  ({len(passed_revisions)}/{len(revisions)})")
+        # Surface a few representative errors for inspection.
+        for e in trips[:5]:
+            outcome = "fixed" if e.revision_passed else "dropped"
+            print(f"  [{e.turn_label}] {outcome}: {e.initial_error[:160]}")
+
     print("\nTOKENS / LATENCY")
     total_in = sum(r.total_input_tokens for r in results)
     total_out = sum(r.total_output_tokens for r in results)
@@ -356,6 +491,7 @@ def main() -> None:
     parser.add_argument("--scenarios", type=int, default=None, help="Limit number of scenarios.")
     parser.add_argument("--out", default=str(Path(__file__).parent / "results-continuity.jsonl"))
     parser.add_argument("--contracts-dir", default=str(Path(__file__).parent / "continuity-contracts"))
+    parser.add_argument("--gate", action="store_true", help="Run `liminate` against each turn's delta. On failure, give the model one revision attempt; on failure of the revision, drop the delta.")
     args = parser.parse_args()
 
     if "ANTHROPIC_API_KEY" not in os.environ:
@@ -367,6 +503,7 @@ def main() -> None:
     print(f"Model: {args.model}  Judge: {judge_model}{'  (self)' if judge_model == args.model else '  (independent)'}")
     print(f"Scenarios: {len(scenarios)}  Runs: {args.runs}  Total scenario runs: {n_total}")
     print(f"Each scenario run = 3 generation calls + N probe-question calls (+ judge calls).")
+    print(f"Gate: {'ON (interpreter runs per turn; one revision attempt on failure)' if args.gate else 'off'}")
     print()
 
     contracts_dir = Path(args.contracts_dir)
@@ -382,7 +519,7 @@ def main() -> None:
                 n += 1
                 print(f"[{n}/{n_total}] scenario={scenario['id']} run={run_idx} ... ", end="", flush=True)
                 try:
-                    r = run_scenario(client, judge_model, args.model, scenario, run_idx, tmpdir)
+                    r = run_scenario(client, judge_model, args.model, scenario, run_idx, tmpdir, gate=args.gate)
                     results.append(r)
                     # Save the accumulated contract for inspection.
                     (contracts_dir / f"{r.scenario_id}-run{r.run}.limn").write_text(r.accumulated_contract)
@@ -396,6 +533,7 @@ def main() -> None:
                         "add_count": r.add_count,
                         "remember_count": r.remember_count,
                         "probes": [p.__dict__ for p in r.probes],
+                        "gate_events": [e.__dict__ for e in r.gate_events],
                         "total_input_tokens": r.total_input_tokens,
                         "total_output_tokens": r.total_output_tokens,
                         "total_cache_read": r.total_cache_read,

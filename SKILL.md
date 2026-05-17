@@ -89,6 +89,19 @@ The skill runs at whatever tier the host supports. Higher tiers add enforcement;
 
 After that, every contract mutation flows through Channel 2 — the `limn` block at the end of each response.
 
+### When starting a session with a source document
+
+The session-1 contract delta is the most important delta in the session. Every fact the user might ask about in a later session must be recorded here — once the source is gone, the contract is the only record. For a fact-dense source:
+
+- Read the source fully before emitting the delta.
+- `remember a source called <name> with "<the full relevant text or a substantial excerpt>"` — capture enough text that `cite` statements can verify against it later. If the source is very long, capture the sections that contain load-bearing facts.
+- For every specific claim, number, name, date, or decision in the source: emit a `cite "<exact text>" from <source-name>` statement. The interpreter will verify each citation. If a fact is in the source, cite it. If you are uncertain whether the exact text appears, do not emit a `cite` — record the fact with `remember` and note it as inferred.
+- `add` each decision, finding, or commitment to the appropriate tracking list.
+
+The test: if someone in session 3 asks about any specific fact from the source, the contract should either contain a verified `cite` for it (retrievable) or an explicit `remember` noting it as inferred (disclosable). Silence on a fact that was in the source is a contract-formation failure.
+
+Do not fabricate citations to satisfy this instruction. Cite what is in the source. Record the rest as inferred. The goal is a richer, honest contract — not a longer one.
+
 ## Vocabulary constraint (critical)
 
 Liminate has 35 reserved words. See `references/vocabulary_quick_reference.md` for the full list. The contract must use only:

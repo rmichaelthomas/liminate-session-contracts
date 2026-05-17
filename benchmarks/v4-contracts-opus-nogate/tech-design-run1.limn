@@ -43,3 +43,11 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "question-kestrel-rate-limit-behavior" to open-questions
+add "question-retry-layer-constraints-from-prior-session" to open-questions
+
+add "question-kestrel-auth-scheme-unknown" to open-questions
+add "question-kestrel-token-expiry-unknown" to open-questions
+
+add "question-kestrel-max-payload-size-unknown" to open-questions

@@ -43,3 +43,11 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+remember a string called source-state with "unscanned"
+remember a string called claim-basis with "inference"
+add "question-halverson-roy-findings-not-in-context" to open-questions
+add "question-learned-routing-hypothesis-awaits-source-verification" to open-questions
+
+when claim-basis is equal to "inference" unless source-state is equal to "verified"
+  show "WARNING: hypothesis comparison to Halverson-Roy is inferred — source not provided"

@@ -27,9 +27,8 @@ show claim-basis
 show tracked-decisions
 show open-questions
 
-show "--- how to cite the source before a consequential claim ---"
-show "write your own statement of the form: cite <exact substring from your source> from <your-source-name>"
-show "the substring must be present in the source text or the interpreter will error"
+show "--- example: citing the source before a consequential claim ---"
+cite "paste" from primary-source
 
 show "--- example: accumulating decisions and questions ---"
 add "decision-architecture-three-layer" to tracked-decisions
@@ -43,3 +42,19 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+remember a source called pipeline-v2-revised with "Project Sundial — ingest pipeline v2 design (revised). Changes since 2026-04-30: Batch size: revised from 500 to 250 events per flush (rationale: reduced p99 flush latency in load testing). Dead-letter strategy: RESOLVED — option (a) DLQ topic with manual replay, with a 7-day retention window. Unchanged from 2026-04-30: Queue backend: NATS JetStream. Retry limit: 5 attempts, exponential backoff (base 250ms, factor 2.0). Consumer concurrency: 8 workers per partition. Schema validation: strict mode. Metrics emission cadence: 10s (now finalized)."
+
+cite "revised from 500 to 250 events per flush" from pipeline-v2-revised
+cite "RESOLVED — option (a) DLQ topic with manual replay, with a 7-day retention window" from pipeline-v2-revised
+cite "Unchanged from 2026-04-30" from pipeline-v2-revised
+cite "10s (now finalized)" from pipeline-v2-revised
+
+add "decision-batch-size-250-per-flush" to tracked-decisions
+add "decision-dlq-option-a-7day-retention" to tracked-decisions
+
+add "question-code-batch-size-500-or-250" to open-questions
+add "question-dlq-implemented-in-code" to open-questions
+
+remember a string called source-state with "verified"
+remember a string called claim-basis with "verified"

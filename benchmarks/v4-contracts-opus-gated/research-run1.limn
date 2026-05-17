@@ -43,3 +43,9 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "question-halverson-roy-source-needed" to open-questions
+add "hypothesis-routing-p99-wins-cpu-loses-typical" to tracked-decisions
+remember a string called claim-basis with "inference"
+
+add "question-p99-reduction-figure-missing" to open-questions

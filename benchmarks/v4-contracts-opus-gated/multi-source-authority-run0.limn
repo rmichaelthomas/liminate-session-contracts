@@ -43,3 +43,7 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "question-code-vs-spec-divergences-unanswerable-no-sources" to open-questions
+
+add "question-retry-limit-across-revisions-unanswerable-no-source" to open-questions

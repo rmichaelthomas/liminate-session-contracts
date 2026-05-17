@@ -43,3 +43,22 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+remember a source called pipeline-v2-revised with "Project Sundial — ingest pipeline v2 design (revised). Changes since 2026-04-30: Batch size: revised from 500 to 250 events per flush (rationale: reduced p99 flush latency in load testing). Dead-letter strategy: RESOLVED — option (a) DLQ topic with manual replay, with a 7-day retention window. Unchanged from 2026-04-30: Queue backend: NATS JetStream. Retry limit: 5 attempts, exponential backoff (base 250ms, factor 2.0). Consumer concurrency: 8 workers per partition. Schema validation: strict mode. Metrics emission cadence: 10s (now finalized)."
+
+cite "revised from 500 to 250 events per flush" from pipeline-v2-revised
+cite "reduced p99 flush latency in load testing" from pipeline-v2-revised
+cite "option (a) DLQ topic with manual replay, with a 7-day retention window" from pipeline-v2-revised
+cite "NATS JetStream" from pipeline-v2-revised
+cite "5 attempts, exponential backoff (base 250ms, factor 2.0)" from pipeline-v2-revised
+cite "8 workers per partition" from pipeline-v2-revised
+cite "strict mode" from pipeline-v2-revised
+cite "10s (now finalized)" from pipeline-v2-revised
+
+add "decision-batch-size-revised-250" to tracked-decisions
+add "decision-dlq-option-a-7day-retention" to tracked-decisions
+add "question-code-batch-size-aligned-with-250" to open-questions
+add "question-code-dlq-implementation-aligned" to open-questions
+
+remember a string called source-state with "verified"
+remember a string called claim-basis with "verified"

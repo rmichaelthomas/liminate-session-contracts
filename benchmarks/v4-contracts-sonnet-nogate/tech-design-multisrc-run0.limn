@@ -43,3 +43,12 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "decision-retry-429-reads-Retry-After-header-first" to tracked-decisions
+add "decision-retry-fallback-truncated-exponential-backoff-with-jitter" to tracked-decisions
+add "decision-retry-max-attempts-3-to-5-then-terminal-failure" to tracked-decisions
+add "decision-retry-distinguishes-429-from-5xx" to tracked-decisions
+add "decision-retry-shared-backoff-state-for-concurrent-requests" to tracked-decisions
+add "question-kestrel-Retry-After-header-always-present-or-optional" to open-questions
+add "question-SLA-budget-determines-backoff-cap-30s-or-60s" to open-questions
+remember a string called claim-basis with "inference"

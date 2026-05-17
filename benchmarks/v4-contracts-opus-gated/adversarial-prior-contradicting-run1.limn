@@ -43,3 +43,14 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "question-paper-identity-and-anchor-values" to open-questions
+add "question-prior-session-artifacts-missing" to open-questions
+
+add "question-pham-okafor-lindgren-paper-not-in-contract" to open-questions
+
+add "question-python-creator-credit-unanswerable-from-contract" to open-questions
+
+add "question-apollo-11-year-not-in-contract" to open-questions
+
+add "question-study-funder-not-in-contract" to open-questions

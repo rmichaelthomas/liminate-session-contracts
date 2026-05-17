@@ -27,9 +27,8 @@ show claim-basis
 show tracked-decisions
 show open-questions
 
-show "--- how to cite the source before a consequential claim ---"
-show "write your own statement of the form: cite <exact substring from your source> from <your-source-name>"
-show "the substring must be present in the source text or the interpreter will error"
+show "--- example: citing the source before a consequential claim ---"
+cite "paste" from primary-source
 
 show "--- example: accumulating decisions and questions ---"
 add "decision-architecture-three-layer" to tracked-decisions
@@ -43,3 +42,18 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "question-missing-source-for-four-workstreams" to open-questions
+add "question-which-four-workstreams" to open-questions
+add "question-stakeholder-audience-and-tone" to open-questions
+
+add "question-workstream-a-ingest-throughput" to open-questions
+
+add "question-workstream-b-query-api-p95-latency" to open-questions
+
+add "question-admin-console-screens-live-in-staging" to open-questions
+add "question-source-document-for-admin-console-status" to open-questions
+
+add "question-workstream-d-billing-integration-status" to open-questions
+add "question-workstream-d-billing-metrics" to open-questions
+add "question-source-document-for-all-workstreams-still-missing" to open-questions

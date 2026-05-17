@@ -27,9 +27,8 @@ show claim-basis
 show tracked-decisions
 show open-questions
 
-show "--- how to cite the source before a consequential claim ---"
-show "write your own statement of the form: cite <exact substring from your source> from <your-source-name>"
-show "the substring must be present in the source text or the interpreter will error"
+show "--- example: citing the source before a consequential claim ---"
+cite "paste" from primary-source
 
 show "--- example: accumulating decisions and questions ---"
 add "decision-architecture-three-layer" to tracked-decisions
@@ -43,3 +42,13 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "question-kestrel-rate-limit-source" to open-questions
+add "question-retry-layer-scope-kestrel-or-generic" to open-questions
+
+add "question-kestrel-rate-limit-still-unresolved" to open-questions
+
+add "question-kestrel-auth-scheme-unknown" to open-questions
+add "question-kestrel-token-expiry-unknown" to open-questions
+
+add "question-kestrel-max-payload-size-unknown" to open-questions

@@ -98,7 +98,7 @@ A session contract is not a Liminate-only artifact — the file is plain prose e
 
 ## Known limitations
 
-**Sonnet 4.6 regression (v1 skill).** On hard-prior single-turn tasks, the v1 skill increased fabrication on Sonnet 4.6 versus baseline (0/9 baseline → 2/9 skill). The v2 skill's two-channel protocol addresses this by separating contract updates from prose responses. Until re-benchmarked with v2, use the skill cautiously on Sonnet 4.6 for tasks where the model has strong priors that conflict with the source.
+**Sonnet 4.6 hard-prior regression.** On hard-prior single-turn tasks (source contradicts training), the v1 skill showed +2/9 fabrication versus baseline when Sonnet graded itself. Independent judging (Opus 4.7 grading the same Sonnet outputs) found 0/9 fabrication — the v1 regression was substantially a self-grading artifact. The v2 skill (two-channel protocol) shows a real +2/9 regression against an independent judge on one task (`hard-lacuna-3`), caused by a `cite` whose text was not in the source. The interpreter gate (running `liminate` against each turn's delta) is designed to catch this: the `cite` would have errored, and the model could have revised. Pending v3 bench results with the gate active.
 
 ## License
 

@@ -27,9 +27,8 @@ show claim-basis
 show tracked-decisions
 show open-questions
 
-show "--- how to cite the source before a consequential claim ---"
-show "write your own statement of the form: cite <exact substring from your source> from <your-source-name>"
-show "the substring must be present in the source text or the interpreter will error"
+show "--- example: citing the source before a consequential claim ---"
+cite "paste" from primary-source
 
 show "--- example: accumulating decisions and questions ---"
 add "decision-architecture-three-layer" to tracked-decisions
@@ -43,3 +42,11 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "decision-retry-on-429-only-not-401-403" to tracked-decisions
+add "decision-retry-after-header-with-exponential-fallback" to tracked-decisions
+add "decision-retry-cap-3-to-5-attempts" to tracked-decisions
+add "decision-propagate-structured-error-after-exhaustion" to tracked-decisions
+add "decision-correlate-retries-via-request-id-header" to tracked-decisions
+add "decision-proactive-pause-on-low-ratelimit-remaining" to tracked-decisions
+remember a string called claim-basis with "inference"

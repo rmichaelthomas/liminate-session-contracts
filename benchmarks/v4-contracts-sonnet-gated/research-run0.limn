@@ -43,3 +43,6 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "question-halverson-roy-source-needed-for-comparison" to open-questions
+remember a string called claim-basis with "inference"

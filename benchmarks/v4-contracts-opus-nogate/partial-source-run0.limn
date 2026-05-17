@@ -43,3 +43,18 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "question-four-workstreams-undefined" to open-questions
+add "question-yesterday-context-missing" to open-questions
+add "question-stakeholder-audience-tone" to open-questions
+
+add "question-workstream-a-throughput-unrecorded" to open-questions
+
+add "question-workstream-b-p95-latency-unrecorded" to open-questions
+
+add "question-admin-console-screens-planned-count-unrecorded" to open-questions
+add "question-admin-console-staging-status-unrecorded" to open-questions
+
+add "question-workstream-d-billing-status-unrecorded" to open-questions
+add "question-workstream-d-metrics-unrecorded" to open-questions
+add "question-workstream-c-identity-unconfirmed" to open-questions

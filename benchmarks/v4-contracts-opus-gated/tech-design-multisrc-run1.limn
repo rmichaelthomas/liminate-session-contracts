@@ -43,3 +43,20 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "question-kestrel-rate-limit-source-needed" to open-questions
+add "question-yesterday-decisions-not-in-contract" to open-questions
+remember a string called claim-basis with "none"
+remember a string called source-state with "unscanned"
+
+add "cannot-answer-kestrel-rate-limit-no-source-in-contract" to open-questions
+
+add "cannot-answer-kestrel-auth-scheme-no-source-in-contract" to open-questions
+add "cannot-answer-kestrel-token-expiry-no-source-in-contract" to open-questions
+add "question-kestrel-auth-source-needed" to open-questions
+
+add "cannot-answer-kestrel-payload-size-no-source-in-contract" to open-questions
+add "question-kestrel-payload-size-source-needed" to open-questions
+
+add "cannot-answer-kestrel-sdk-language-no-source-in-contract" to open-questions
+add "question-kestrel-sdk-language-source-needed" to open-questions

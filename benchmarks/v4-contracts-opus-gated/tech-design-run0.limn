@@ -43,3 +43,19 @@ show "--- example: routing on verification status ---"
 choose if source-state is equal to "verified": show "proceed with claims" otherwise show "hold or disclose"
 
 disclose from claim-basis
+
+add "decision-retry-lives-in-transport-wrapper" to tracked-decisions
+add "decision-429-honor-retry-after-no-jitter" to tracked-decisions
+add "decision-503-exponential-backoff-500ms-to-30s-full-jitter" to tracked-decisions
+add "decision-max-5-attempts-then-surface-original-error" to tracked-decisions
+add "question-kestrel-retry-after-format-seconds-or-http-date" to open-questions
+add "question-kestrel-503-includes-retry-after" to open-questions
+add "question-kestrel-server-side-retry-budget" to open-questions
+remember a string called claim-basis with "inference"
+
+add "question-kestrel-per-minute-rate-limit-per-project-token" to open-questions
+
+add "question-kestrel-auth-scheme" to open-questions
+add "question-kestrel-token-expiry" to open-questions
+
+add "question-kestrel-max-payload-size" to open-questions
