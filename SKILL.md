@@ -12,7 +12,7 @@ description: >-
 
 # Session contracts
 
-A session contract is a small, inspectable record of *what you have actually verified* during a working session versus *what you are inferring*. It lives as a `.limn` file (Liminate, a 35-word prose-as-syntax language) so the contract is both human-readable and machine-checkable.
+A session contract is a small, inspectable record of *what you have actually verified* during a working session versus *what you are inferring*. It lives as a `.limn` file (Liminate, a 37-word prose-as-syntax language) so the contract is both human-readable and machine-checkable.
 
 The contract tracks:
 
@@ -53,7 +53,7 @@ Format:
 
 ```limn
 remember a source called repo-readme with "the text that was actually read"
-cite "35 reserved words" from repo-readme
+cite "37 reserved words" from repo-readme
 add "decision-bounded-vocabulary" to tracked-decisions
 remember a string called claim-basis with "verified"
 ```
@@ -111,6 +111,47 @@ The skill runs at whatever tier the host supports. Higher tiers add enforcement;
 | 3 | Persistent storage + session pack | Load the session pack (`liminate --pack references/session_pack.json …`). Use `cite` and `verify` from the pack. Persist the contract across sessions so prior decisions inform later ones. |
 
 ## Starting a contract
+
+### Check for prior contracts first
+
+Before creating a new contract from the blank template, check whether
+prior session contracts exist for this project or user. Prior contracts
+may be available as:
+
+- Local `.limn` files on disk (tier 2+)
+- Saved contracts in Receipts via `GET /api/v1/export` (tier 2+ with
+  `$RECEIPTS_API_KEY` set)
+- Contract deltas from earlier in the conversation history (tier 1)
+
+If prior contracts exist, use the `liminate-contract-inheritance` skill
+to produce an inherited preamble before starting the new contract. The
+inheritance skill extracts locked decisions, active corrections,
+unresolved questions, and verified claims from the prior chain and
+emits a preamble with `includes` guards that the interpreter enforces.
+
+**Tier 2+ (inheritance skill installed):**
+
+```bash
+inherit-contracts ./prior_contracts/*.limn --output ./dist
+```
+
+Use `./dist/inherited_preamble.limn` as the starting state instead of
+the blank template. The preamble carries forward:
+
+- `inherited-decisions` — locked decisions the new session must respect
+- `active-corrections` — engagement posture from prior sessions
+- `unresolved-questions` — questions no prior session resolved
+- `verified-claims` — claims backed by passing `cite` checks
+- `includes` guards that fire on initial evaluation, showing which
+  constraints are active
+
+**Tier 1 (conversation only):** If prior contract deltas are visible
+in the conversation history, manually carry forward locked decisions
+and corrections by emitting `add` statements in the first delta block.
+
+**No prior contracts:** Start from the blank template (steps 1–4 below).
+
+### From the template
 
 1. Read `references/session_contract_template.limn` for the starting shape.
 2. Copy it to a working location (disk at tier 2+, conversation at tier 1).
@@ -265,7 +306,7 @@ The prompt compiler doesn't need to implement these as hard-coded rules. It read
 - **When `consult-prior-context` is active, historical blocks from prior sessions get higher retention scores.** The context pager's alpha (relevance) weight increases for blocks that overlap with the current intent AND contain facts from earlier sessions.
 - **When `verify-against-source-not-memory` is active, source blocks get higher retention scores.** The context pager preserves source material at higher priority, reducing the chance the model falls back to training data.
 
-**Liminate language.** Corrections use only the base 35-word vocabulary (`add`, `remember`, `when`, `show`). No pack extension needed. No new verbs. The mechanism is a list, a `when` handler, and the model's own consultation discipline. This is deliberate: corrections should work at Tier 1 (conversation only) with no interpreter, no pack, no file tools. The simplest tier gets the full correction mechanism.
+**Liminate language.** Corrections use only the base 37-word vocabulary (`add`, `remove`, `remember`, `when`, `show`, `includes`). No pack extension needed. No new verbs. The mechanism is a list, a `when` handler, and the model's own consultation discipline. This is deliberate: corrections should work at Tier 1 (conversation only) with no interpreter, no pack, no file tools. The simplest tier gets the full correction mechanism.
 
 ### What corrections are NOT
 
@@ -273,9 +314,9 @@ Corrections are not preferences ("I like bullet points"), not facts ("the API ke
 
 ## Vocabulary constraint (critical)
 
-Liminate has 35 reserved words. See `references/vocabulary_quick_reference.md` for the full list. The contract must use only:
+Liminate has 37 reserved words (12 verbs, 15 connectives). See `references/vocabulary_quick_reference.md` for the full list. The contract must use only:
 
-- One of the 35 reserved words
+- One of the 37 reserved words
 - A user-defined hyphenated name (e.g. `tracked-decisions`)
 - A quoted string (e.g. `"unscanned"`)
 - A number
@@ -283,6 +324,17 @@ Liminate has 35 reserved words. See `references/vocabulary_quick_reference.md` f
 When the session pack is loaded (`--pack references/session_pack.json`), 5 additional words are reserved: 3 nouns (`claim`, `source`, `decision`) and 2 verbs (`cite`, `verify`).
 
 Do not invent verbs or connectives. If you reach for a word that is not in the vocabulary, restructure the sentence using the vocabulary that exists.
+
+Two words are especially relevant for contract inheritance:
+
+- `includes` — connective for list membership in conditions. Used in
+  `when` guards to test whether a list contains a specific item:
+  `when inherited-decisions includes "use-fastapi"`. Also works in
+  `where` and `choose if` conditions.
+- `remove` — verb for retracting items from lists:
+  `remove "use-flask" from tracked-decisions`. Errors if the item
+  is not found. Used for clean decision reversal instead of adding
+  contradicting items.
 
 ## Session pack — `cite` and `verify`
 
@@ -303,10 +355,10 @@ The pack adds 5 words:
 Usage example (entire example is one Channel-2 emission):
 
 ```
-remember a source called readme with "Liminate has 35 reserved words."
-remember a claim called counted-claim with "Liminate has 35 reserved words."
+remember a source called readme with "Liminate has 37 reserved words."
+remember a claim called counted-claim with "Liminate has 37 reserved words."
 
-cite "35 reserved words" from readme
+cite "37 reserved words" from readme
 verify counted-claim from readme
 
 when verification-status is equal to "mismatch"
@@ -318,7 +370,7 @@ Both verbs use `type_constraint`: `cite` requires the `from` slot to carry the `
 ## Reference files
 
 - `references/session_contract_template.limn` — starting template that parses and runs against the Liminate interpreter.
-- `references/vocabulary_quick_reference.md` — the 35-word vocabulary.
+- `references/vocabulary_quick_reference.md` — the 37-word vocabulary.
 - `references/session_pack.json` — loadable session pack (`claim`, `source`, `decision`, `cite`, `verify`).
 - `examples/design_session_contract.limn` — full contract for an architectural design session.
 - `examples/code_review_contract.limn` — full contract for a code review session.
@@ -338,7 +390,7 @@ The inspection surface checks `cite` statements by running them through the Limi
 
 ## What this skill is not
 
-- Not a memory system. Use the host platform's memory for persistence; the contract is a *per-session* artifact (tier 3 may persist across sessions, but it is still session-scoped).
+- Not a memory system — but contracts can carry forward. Use the host platform's memory for transient persistence; the contract is a *per-session* artifact. However, with the `liminate-contract-inheritance` skill, locked decisions, corrections, and verified claims from prior sessions can be inherited as an executable preamble for the next session. The contract chain becomes the institutional memory; the inheritance skill makes it continuous.
 - Not a planning tool. The contract records *what was verified*, not *what to do next*.
 - Not a substitute for actually reading sources. A contract with `source-state: verified` is only honest if the source was actually read — and a `cite` is only honest if the substring is actually in the source.
 - Not a personality layer. Session corrections are about engagement posture (depth, pace, directness), not about tone, humor, or formality. The corrections are operational, not aesthetic.
