@@ -61,6 +61,27 @@ remember a string called claim-basis with "verified"
 
 The block is **append-only per turn**. Each turn's block contains only the *new* statements for that turn. The full contract is the concatenation of all blocks across the session — plus the initial template, if you started from one.
 
+### Rule: declare lists before `add`
+
+The interpreter errors on `add "X" to <list>` if `<list>` has not been `remember`ed. The error is `ERROR_SEMANTIC: I can't find '<list>'. You might need to 'remember' it first.` and the line does **not** execute. In the Receipts inspection view this manifests as empty Tracked decisions / Session corrections / Open questions sections even though the contract source contains `add` statements — the interpreter rejected them.
+
+**Therefore: every contract must declare its lists before any `add`.** The blank template does this for `tracked-decisions`, `open-questions`, and `session-corrections`. If your first delta block uses any of those lists and you did **not** start from the template, prepend the declarations in that same block:
+
+```limn
+remember a list called tracked-decisions with "none"
+remember a list called open-questions with "none"
+remember a list called session-corrections with "none"
+```
+
+For any custom list (e.g., `verified-artifacts`), declare it the first time you `add` to it in the same block:
+
+```limn
+remember a list called verified-artifacts with "none"
+add "artifact-build-green" to verified-artifacts
+```
+
+Declaring a list a second time is harmless — it re-seeds it. Declaring it zero times silently drops every `add`.
+
 ### Rule: `cite` before claiming
 
 Before any consequential claim that depends on a source, the contract block must contain a `cite` statement verifying the claim text exists in the source. If the `cite` would fail (the text is not actually in the source), do **not** emit a fake `cite`. Instead, disclose in the prose that the claim is inferred, not verified, and omit the `cite`.
@@ -72,6 +93,16 @@ This is the constraining mechanism. The interpreter checks `cite` at runtime —
 At session end, do three things in order:
 
 1. **Emit the final contract.** Concatenate all per-turn delta blocks in order, preceded by the initial template (if any), and present as one fenced `limn` block. This is the complete session contract.
+
+   **Required baseline.** If you did not start from the template, the concatenated contract MUST still declare the standard lists before any `add` (see "Rule: declare lists before `add`" above). Otherwise the interpreter rejects every `add` and the saved contract appears empty in Receipts. Before posting to `/save`, scan the contract: every `add "X" to <list>` must be preceded somewhere above it by `remember a list called <list> with "none"` (or another seed value). If a list is missing its declaration, prepend the declarations to the contract before saving. The minimum safe preamble is:
+
+   ```limn
+   remember a string called source-state with "verified"
+   remember a string called claim-basis with "verified"
+   remember a list called tracked-decisions with "none"
+   remember a list called open-questions with "none"
+   remember a list called session-corrections with "none"
+   ```
 
 2. **Generate a Receipts permalink.** Save the contract to the Receipts inspection surface and present the permalink.
 
