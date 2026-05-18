@@ -15,8 +15,9 @@ before any `add`. This test verifies that:
      `remember a list called <list>` earlier in the source.
 
 Run:
-    python bench_list_seeding.py
-    python bench_list_seeding.py --endpoint https://receipts.liminate.dev/save
+    python bench_list_seeding.py                 # full: static + live roundtrip
+    python bench_list_seeding.py --static-only   # static check only, no network
+    python bench_list_seeding.py --endpoint URL  # override save endpoint
 
 Exits 0 on pass, 1 on any failure.
 """
@@ -88,9 +89,38 @@ def assert_seeds_declared(source: str) -> list[str]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
+    ap.add_argument(
+        "--static-only",
+        action="store_true",
+        help="skip live POST /save roundtrip; run only the static checker",
+    )
     args = ap.parse_args()
 
     failures: list[str] = []
+
+    # Static check first — runs offline, catches the bad contract pattern
+    # before any network call.
+    missing_bad = assert_seeds_declared(CONTRACT_WITHOUT_SEEDS)
+    if missing_bad != ["open-questions", "session-corrections", "tracked-decisions"]:
+        failures.append(
+            f"static check missed undeclared lists in unseeded contract: "
+            f"got {missing_bad}"
+        )
+    missing_good = assert_seeds_declared(CONTRACT_WITH_SEEDS)
+    if missing_good:
+        failures.append(
+            f"static check false-positive on seeded contract: {missing_good}"
+        )
+
+    if args.static_only:
+        if failures:
+            print("FAIL (static-only)")
+            for f in failures:
+                print(f"  - {f}")
+            return 1
+        print("PASS (static-only)")
+        print("  static check: catches missing seeds, clears valid contracts")
+        return 0
 
     # Test 1: unseeded contract must produce semantic errors for each bare add.
     r1 = post_save(args.endpoint, CONTRACT_WITHOUT_SEEDS, "bench-unseeded")
@@ -123,21 +153,6 @@ def main() -> int:
             failures.append(
                 f"seeded contract: list {name!r} expected {expected}, got {got}"
             )
-
-    # Test 3: static check — assert_seeds_declared catches the bad contract
-    # and clears the good one. This is the helper agents/CI can call on any
-    # contract before POSTing.
-    missing_bad = assert_seeds_declared(CONTRACT_WITHOUT_SEEDS)
-    if missing_bad != ["open-questions", "session-corrections", "tracked-decisions"]:
-        failures.append(
-            f"static check missed undeclared lists in unseeded contract: "
-            f"got {missing_bad}"
-        )
-    missing_good = assert_seeds_declared(CONTRACT_WITH_SEEDS)
-    if missing_good:
-        failures.append(
-            f"static check false-positive on seeded contract: {missing_good}"
-        )
 
     if failures:
         print("FAIL")

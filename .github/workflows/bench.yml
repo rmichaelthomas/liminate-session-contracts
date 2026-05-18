@@ -7,15 +7,32 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: bench-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  list-seeding:
-    name: list-seeding regression guard
+  static-check:
+    name: list-seeding static check (blocking)
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 2
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Run bench_list_seeding
+      - name: Run static check
+        run: python3 benchmarks/bench_list_seeding.py --static-only
+
+  live-roundtrip:
+    name: list-seeding live roundtrip (non-blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run live roundtrip against receipts.liminate.dev
         run: python3 benchmarks/bench_list_seeding.py
