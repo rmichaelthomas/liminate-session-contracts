@@ -118,6 +118,7 @@ Session contracts and Karpathy-style instruction sets solve different problems. 
 - **Hard-prior single-turn tasks show small regressions.** On tasks where the source contradicts the model's training data, the skill condition shows +1–3 fabrications versus baseline (n=9 per round). The interpreter gate is designed to catch these but requires a contract delta, which single-turn Q&A tasks typically don't produce.
 - **Cross-agent portability is untested.** Benchmarked on Claude models only. Codex, Gemini, and Copilot have not been tested.
 - **The gate's catch behavior is unmeasured.** Across 101 gated turns, the interpreter gate never fired. Correctly designed infrastructure, unexercised revision path.
+- **Lists must be `remember`ed before `add`.** The interpreter rejects `add "X" to <list>` with `ERROR_SEMANTIC` if `<list>` was not previously `remember`ed. In Receipts this renders as an empty Tracked decisions / Open questions / Session corrections section even though the contract source contains the `add` statements. SKILL.md (as of `c89642f`, May 2026) requires the agent to prepend a baseline preamble declaring the standard lists before saving any contract. The template ships with the declarations; ad-hoc contracts must include them explicitly. The `benchmarks/bench_list_seeding.py` guard catches regressions of this behavior.
 
 ## License
 
