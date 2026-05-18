@@ -1,8 +1,8 @@
 # Liminate vocabulary — quick reference
 
-Liminate's base vocabulary is fixed at **35 reserved words**. Every word in a `.limn` file must either be one of these reserved words or a user-defined name (hyphenated, no spaces). Source of truth: [`src/liminate/vocabulary.py`](https://github.com/rmichaelthomas/liminate/blob/main/src/liminate/vocabulary.py).
+Liminate's base vocabulary is fixed at **38 reserved words**. Every word in a `.limn` file must either be one of these reserved words or a user-defined name (hyphenated, no spaces). Source of truth: [`src/liminate/vocabulary.py`](https://github.com/rmichaelthomas/liminate/blob/main/src/liminate/vocabulary.py).
 
-## Verbs (11)
+## Verbs (12)
 
 | Verb | Purpose |
 |------|---------|
@@ -17,10 +17,11 @@ Liminate's base vocabulary is fixed at **35 reserved words**. Every word in a `.
 | `choose` | Branch on a condition (`if` / `otherwise`). |
 | `finish` | Exit listener mode immediately. |
 | `add` | Append an item to an existing list. |
+| `remove` | Retract an item from a list. Errors if the item is not present. |
 
-## Connectives (14)
+## Connectives (16)
 
-`where`, `and`, `or`, `from`, `with`, `called`, `to`, `how`, `as`, `of`, `if`, `otherwise`, `when`, `unless`
+`where`, `and`, `or`, `from`, `with`, `called`, `to`, `how`, `as`, `of`, `if`, `otherwise`, `when`, `unless`, `includes`, `within`
 
 ## Operators (5)
 
@@ -40,7 +41,7 @@ Liminate's base vocabulary is fixed at **35 reserved words**. Every word in a `.
 
 ## Counting
 
-11 verbs + 14 connectives + 5 operators + 3 articles + 1 delimiter + 2 deferred = **36 tokens**, but the delimiter `:` is not a *word* in the vocabulary tables (it's a single character), so the reserved-word total is **35**.
+12 verbs + 16 connectives + 5 operators + 3 articles + 1 delimiter + 2 deferred = **39 tokens**, but the delimiter `:` is not a *word* in the vocabulary tables (it's a single character), so the reserved-word total is **38**.
 
 ## Naming rules
 
