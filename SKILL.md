@@ -352,7 +352,7 @@ Liminate has 44 reserved words (16 verbs, 18 connectives). See `references/vocab
 - A quoted string (e.g. `"unscanned"`)
 - A number
 
-When the session pack is loaded (`--pack references/session_pack.json`), 5 additional words are reserved: 3 nouns (`claim`, `source`, `decision`) and 2 verbs (`cite`, `verify`).
+When the session pack is loaded (`--pack references/session_pack.json`), 6 additional words are reserved: 3 nouns (`claim`, `source`, `decision`) and 3 verbs (`cite`, `verify`, `measure`).
 
 Do not invent verbs or connectives. If you reach for a word that is not in the vocabulary, restructure the sentence using the vocabulary that exists.
 
@@ -382,6 +382,7 @@ The pack adds 5 words:
 - **`decision`** (noun) — descriptor for locked or open decisions
 - **`cite <text> from <source>`** (verb) — substring check, errors if the text is not found in the source. The model does not check — the interpreter does.
 - **`verify <claim> from <source>`** (verb) — structural comparison. Flags `verification-status` (`match` / `mismatch`) and `verification-divergences` (the diff). Does not error on mismatch — surfaces it for inspection.
+- **`measure <number> from <source> within <tolerance>`** (verb) — numeric proximity check. Extracts all numbers from the source string, finds the closest to the claimed value, checks whether the delta is within tolerance. Flags `measure-status` (`within_tolerance` / `outside_tolerance` / `no_numbers_found`), `measure-matched` (the closest number found), and `measure-delta` (the absolute difference). Does not error on mismatch — surfaces it for inspection. Use alongside `cite` to distinguish precision noise (cite fails, measure passes) from genuine errors (both fail).
 
 Usage example (entire example is one Channel-2 emission):
 
