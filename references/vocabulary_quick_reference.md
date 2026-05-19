@@ -1,8 +1,8 @@
 # Liminate vocabulary — quick reference
 
-Liminate's base vocabulary is fixed at **38 reserved words**. Every word in a `.limn` file must either be one of these reserved words or a user-defined name (hyphenated, no spaces). Source of truth: [`src/liminate/vocabulary.py`](https://github.com/rmichaelthomas/liminate/blob/main/src/liminate/vocabulary.py).
+Liminate's base vocabulary is fixed at **44 reserved words**. Every word in a `.limn` file must either be one of these reserved words or a user-defined name (hyphenated, no spaces). Source of truth: [`src/liminate/vocabulary.py`](https://github.com/rmichaelthomas/liminate/blob/main/src/liminate/vocabulary.py).
 
-## Verbs (12)
+## Verbs (16)
 
 | Verb | Purpose |
 |------|---------|
@@ -18,10 +18,14 @@ Liminate's base vocabulary is fixed at **38 reserved words**. Every word in a `.
 | `finish` | Exit listener mode immediately. |
 | `add` | Append an item to an existing list. |
 | `remove` | Retract an item from a list. Errors if the item is not present. |
+| `weakens` | Attach autonomous linear decay to a numeric value (falls to zero over a stated period of ticks). |
+| `require` | Halt with `REQUIREMENT_NOT_MET` if a condition fails; silent on pass. |
+| `assign` | Store an item-to-recipient mapping (`assign review-task to "compliance-team"`). |
+| `expect` | Like `require`, but emits a divergence output line on failure and continues with `SUCCESS` (informational, non-halting). |
 
-## Connectives (16)
+## Connectives (18)
 
-`where`, `and`, `or`, `from`, `with`, `called`, `to`, `how`, `as`, `of`, `if`, `otherwise`, `when`, `unless`, `includes`, `within`
+`where`, `and`, `or`, `from`, `with`, `called`, `to`, `how`, `as`, `of`, `if`, `otherwise`, `when`, `unless`, `includes`, `within`, `over`, `then`
 
 ## Operators (5)
 
@@ -41,7 +45,7 @@ Liminate's base vocabulary is fixed at **38 reserved words**. Every word in a `.
 
 ## Counting
 
-12 verbs + 16 connectives + 5 operators + 3 articles + 1 delimiter + 2 deferred = **39 tokens**, but the delimiter `:` is not a *word* in the vocabulary tables (it's a single character), so the reserved-word total is **38**.
+16 verbs + 18 connectives + 5 operators + 3 articles + 1 delimiter + 2 deferred = **45 tokens**, but the delimiter `:` is not a *word* in the vocabulary tables (it's a single character), so the reserved-word total is **44**.
 
 ## Naming rules
 
