@@ -12,7 +12,7 @@ description: >-
 
 # Session contracts
 
-A session contract is a small, inspectable record of *what you have actually verified* during a working session versus *what you are inferring*. It lives as a `.limn` file (Liminate, a 38-word prose-as-syntax language) so the contract is both human-readable and machine-checkable.
+A session contract is a small, inspectable record of *what you have actually verified* during a working session versus *what you are inferring*. It lives as a `.limn` file (Liminate, a 44-word prose-as-syntax language) so the contract is both human-readable and machine-checkable.
 
 The contract tracks:
 
@@ -53,7 +53,7 @@ Format:
 
 ```limn
 remember a source called repo-readme with "the text that was actually read"
-cite "38 reserved words" from repo-readme
+cite "44 reserved words" from repo-readme
 add "decision-bounded-vocabulary" to tracked-decisions
 remember a string called claim-basis with "verified"
 ```
@@ -337,7 +337,7 @@ The prompt compiler doesn't need to implement these as hard-coded rules. It read
 - **When `consult-prior-context` is active, historical blocks from prior sessions get higher retention scores.** The context pager's alpha (relevance) weight increases for blocks that overlap with the current intent AND contain facts from earlier sessions.
 - **When `verify-against-source-not-memory` is active, source blocks get higher retention scores.** The context pager preserves source material at higher priority, reducing the chance the model falls back to training data.
 
-**Liminate language.** Corrections use only the base 38-word vocabulary (`add`, `remove`, `remember`, `when`, `show`, `includes`). No pack extension needed. No new verbs. The mechanism is a list, a `when` handler, and the model's own consultation discipline. This is deliberate: corrections should work at Tier 1 (conversation only) with no interpreter, no pack, no file tools. The simplest tier gets the full correction mechanism.
+**Liminate language.** Corrections use only the base 44-word vocabulary (`add`, `remove`, `remember`, `when`, `show`, `includes`). No pack extension needed. No new verbs. The mechanism is a list, a `when` handler, and the model's own consultation discipline. This is deliberate: corrections should work at Tier 1 (conversation only) with no interpreter, no pack, no file tools. The simplest tier gets the full correction mechanism.
 
 ### What corrections are NOT
 
@@ -345,9 +345,9 @@ Corrections are not preferences ("I like bullet points"), not facts ("the API ke
 
 ## Vocabulary constraint (critical)
 
-Liminate has 38 reserved words (12 verbs, 16 connectives). See `references/vocabulary_quick_reference.md` for the full list. The contract must use only:
+Liminate has 44 reserved words (16 verbs, 18 connectives). See `references/vocabulary_quick_reference.md` for the full list. The contract must use only:
 
-- One of the 38 reserved words
+- One of the 44 reserved words
 - A user-defined hyphenated name (e.g. `tracked-decisions`)
 - A quoted string (e.g. `"unscanned"`)
 - A number
@@ -386,10 +386,10 @@ The pack adds 5 words:
 Usage example (entire example is one Channel-2 emission):
 
 ```
-remember a source called readme with "Liminate has 38 reserved words."
-remember a claim called counted-claim with "Liminate has 38 reserved words."
+remember a source called readme with "Liminate has 44 reserved words."
+remember a claim called counted-claim with "Liminate has 44 reserved words."
 
-cite "38 reserved words" from readme
+cite "44 reserved words" from readme
 verify counted-claim from readme
 
 when verification-status is equal to "mismatch"
@@ -401,7 +401,7 @@ Both verbs use `type_constraint`: `cite` requires the `from` slot to carry the `
 ## Reference files
 
 - `references/session_contract_template.limn` — starting template that parses and runs against the Liminate interpreter.
-- `references/vocabulary_quick_reference.md` — the 38-word vocabulary.
+- `references/vocabulary_quick_reference.md` — the 44-word vocabulary.
 - `references/session_pack.json` — loadable session pack (`claim`, `source`, `decision`, `cite`, `verify`).
 - `examples/design_session_contract.limn` — full contract for an architectural design session.
 - `examples/code_review_contract.limn` — full contract for a code review session.
