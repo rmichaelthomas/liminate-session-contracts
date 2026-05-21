@@ -54,7 +54,7 @@ Format:
 
 ```limn
 remember a source called repo-readme with "the text that was actually read"
-cite "51 reserved words" from repo-readme
+cite "54 reserved words" from repo-readme
 add "decision-bounded-vocabulary" to tracked-decisions
 remember a string called claim-basis with "verified"
 ```
@@ -385,9 +385,9 @@ Corrections are not preferences ("I like bullet points"), not facts ("the API ke
 
 ## Vocabulary constraint (critical)
 
-Liminate has 51 reserved words (19 verbs, 19 connectives). See `references/vocabulary_quick_reference.md` for the full list. The contract must use only:
+Liminate has 54 reserved words (19 verbs, 20 connectives, 8 operators, 1 declaration). See `references/vocabulary_quick_reference.md` for the full list. The contract must use only:
 
-- One of the 51 reserved words
+- One of the 54 reserved words
 - A user-defined hyphenated name (e.g. `tracked-decisions`)
 - A quoted string (e.g. `"unscanned"`)
 - A number
@@ -427,10 +427,10 @@ The pack adds 5 words:
 Usage example (entire example is one Channel-2 emission):
 
 ```
-remember a source called readme with "Liminate has 51 reserved words."
-remember a claim called counted-claim with "Liminate has 51 reserved words."
+remember a source called readme with "Liminate has 54 reserved words."
+remember a claim called counted-claim with "Liminate has 54 reserved words."
 
-cite "51 reserved words" from readme
+cite "54 reserved words" from readme
 verify counted-claim from readme
 
 when verification-status is equal to "mismatch"

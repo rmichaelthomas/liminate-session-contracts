@@ -1,6 +1,6 @@
 # Liminate vocabulary — quick reference
 
-Liminate's base vocabulary is fixed at **51 reserved words**. Every word in a `.limn` file must either be one of these reserved words or a user-defined name (hyphenated, no spaces). Source of truth: [`src/liminate/vocabulary.py`](https://github.com/rmichaelthomas/liminate/blob/main/src/liminate/vocabulary.py).
+Liminate's base vocabulary is fixed at **54 reserved words**. Every word in a `.limn` file must either be one of these reserved words or a user-defined name (hyphenated, no spaces). Source of truth: [`src/liminate/vocabulary.py`](https://github.com/rmichaelthomas/liminate/blob/main/src/liminate/vocabulary.py).
 
 ## Verbs (19)
 
@@ -26,19 +26,27 @@ Liminate's base vocabulary is fixed at **51 reserved words**. Every word in a `.
 | `compare` | Compare two values into a `comparison` record (`status` + `divergences`). |
 | `transform` | Mutate each element of a list in place via an arithmetic expression. |
 
-## Connectives (19)
+## Connectives (20)
 
-`where`, `and`, `or`, `from`, `with`, `called`, `to`, `how`, `as`, `of`, `if`, `otherwise`, `when`, `unless`, `includes`, `within`, `over`, `then`, `by`
+`where`, `and`, `or`, `from`, `with`, `called`, `to`, `how`, `as`, `of`, `if`, `otherwise`, `when`, `unless`, `includes`, `within`, `over`, `then`, `by`, `because`
 
-## Operators (7 single-word + 3 multi-word)
+`because` attaches a quoted rationale to any verb statement as inert metadata (statement-terminal): `require amount is above 50000 because "SOX compliance"`. Rendered and inspected, never executed.
 
-Single-word: `is`, `above`, `below`, `not`, `plus`, `minus`, `reverse`.
+## Operators (8 single-word + 3 multi-word)
+
+Single-word: `is`, `above`, `below`, `not`, `plus`, `minus`, `reverse`, `inherited`.
+
+`inherited` is a statement-initial provenance modifier marking a statement as carried forward from a prior context (session, agent, contract); it reuses `from` for optional agent attribution: `inherited require amount is above 50000 from agent-compliance`. Inert metadata, overridable, never executed.
 
 Multi-word: `equal to`, `multiplied by`, `divided by`. The bare trigger words `equal`, `multiplied`, and `divided` are reserved so the lexer can recognize each two-word form unambiguously.
 
 ## Articles (3)
 
 `the`, `a`, `an`
+
+## Declarations (1)
+
+`about` — declares the program's topic as inert metadata on the first line: `about "expense authorization"`. Not stored in the symbol table, not executed.
 
 ## Delimiter (1)
 
@@ -50,7 +58,7 @@ None. `transform` and `compare` were the last deferred slots; both are now activ
 
 ## Counting
 
-19 verbs + 19 connectives + 7 single-word operators + 3 multi-word trigger words (`equal`/`multiplied`/`divided`) + 3 articles + 0 deferred = **51 reserved words**. The delimiter `:` is a single character, not a word in the vocabulary tables, so it is not counted in the 51.
+19 verbs + 20 connectives + 8 single-word operators + 3 multi-word trigger words (`equal`/`multiplied`/`divided`) + 3 articles + 1 declaration + 0 deferred = **54 reserved words**. The delimiter `:` is a single character, not a word in the vocabulary tables, so it is not counted in the 54.
 
 ## Naming rules
 
