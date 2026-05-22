@@ -121,10 +121,40 @@ At session end, do three things in order:
 
    Present the resulting permalink (e.g., `https://receipts.liminate.dev/c/a7x9k2Bf`).
 
-   **Tier 1 (conversation only, no tools):** You cannot call the API. Provide a ready-to-paste terminal command:
-   - Emit the full contract as a fenced `limn` block (step 1 above).
-   - Below it, provide a `curl` command the user can paste into their terminal. Use the same shape as the Tier 2+ command (including `-H "Authorization: Bearer $RECEIPTS_API_KEY"`), with the contract text JSON-escaped in the `-d` body.
-   - Tell the user: "Paste this command in your terminal to save this contract to Receipts and get a permalink."
+   **Classifier note (Tier 2+ with auto-approval / sandbox).** Some hosts run an auto-mode classifier that *denies* this call because it sends a secret (`Authorization: Bearer …`) to an external endpoint — the signature of credential exfiltration. This is a host policy, not an API or key problem; the same request succeeds from a plain shell. If you hit the denial, do **not** try to tunnel around it (wrapping the curl in a python script, a heredoc, or a test runner — the classifier flags that as an Auto-Mode Bypass and the user loses trust). Instead, tell the user to add a one-line allow rule scoped to this exact endpoint:
+
+   ```json
+   "Bash(curl -s -X POST https://receipts.liminate.dev/save *)"
+   ```
+
+   via `/permissions` or in their `settings.local.json` `allow` array, then restart so permissions reload. An explicit allow rule is deterministic and bypasses the classifier; auto-mode is a model judgment that can change between sessions. The agent **cannot** add this rule itself — editing a permissions allow-list is a hard-blocked self-modification. Hand the rule to the user and let them apply it. (Verified live May 22, 2026: with the allow rule in place, the agent's direct `curl … /save` succeeds with no denial.)
+
+   **Tier 1 (conversation only, no tools), or whenever the user must run the save themselves:** Do **not** emit a multi-line `curl` for the user to paste. Pasting a wrapped `curl -d '{…}'` block out of chat markdown corrupts the JSON body — line-wrapping and leading indentation inject stray whitespace into the `source` string, the server rejects the malformed JSON and returns an error object with no `contract` key, and the permalink extractor crashes with `KeyError: 'contract'`. This is a real, observed failure (May 22, 2026). Instead, give the user a **single self-contained Python file to run**, which has no paste step to mangle:
+
+   1. Emit the full contract as a fenced `limn` block (step 1 above).
+   2. If you have file tools, write `save_receipt.py` to disk (file writes are not blocked by the classifier — only the network call is). Otherwise emit its contents in one fenced ```python block for the user to save. The script embeds the contract as a triple-quoted string, reads `RECEIPTS_API_KEY` from the environment, POSTs via `urllib`, and **prints the raw HTTP status and response body** before extracting the permalink — so a non-200 or a changed response shape is visible instead of crashing:
+
+      ```python
+      import json, urllib.request, urllib.error, os
+      contract = """<full contract text here, unescaped — triple-quoted handles the newlines>"""
+      key = os.environ.get("RECEIPTS_API_KEY")
+      print("KEY:", "set" if key else "NOT SET", f"({len(key)} chars)" if key else "")
+      body = json.dumps({"label": "<session label>", "source": contract}).encode()
+      req = urllib.request.Request("https://receipts.liminate.dev/save", data=body, method="POST")
+      req.add_header("Content-Type", "application/json")
+      req.add_header("Authorization", "Bearer " + (key or ""))
+      try:
+          with urllib.request.urlopen(req, timeout=30) as r:
+              print("HTTP", r.status)
+              data = json.loads(r.read().decode())
+              print("PERMALINK:", "https://receipts.liminate.dev" + data["contract"]["permalink"])
+      except urllib.error.HTTPError as e:
+          print("HTTP", e.code); print(e.read().decode())
+      ```
+
+   3. Tell the user to run `python3 save_receipt.py` (by full path) and paste back the output. The printed permalink is the saved contract.
+
+   Avoid heredocs (`python3 - <<'PY' … PY`) for the user-run path — a paste that drops the closing delimiter leaves the shell hanging at a `heredoc>` prompt. A file the user runs by path is the robust path.
 
    `$RECEIPTS_API_KEY` is an environment variable the user sets up once. If the variable is not set, tell the user: "To save contracts to your account, generate an API key at receipts.liminate.dev/keys and run the setup command shown there."
 
@@ -454,7 +484,7 @@ Receipts (`https://receipts.liminate.dev`) is the hosted inspection surface for 
 
 Three ways to use it:
 
-1. **Click the session-end permalink.** The agent saves the contract to Receipts via `POST /save` and presents a short permalink (e.g., `receipts.liminate.dev/c/a7x9k2Bf`). At Tier 1 (no tools), the agent provides a paste-ready terminal command instead. The curl command uses `$RECEIPTS_API_KEY` to authenticate. If the user hasn't set this up, direct them to receipts.liminate.dev/keys.
+1. **Click the session-end permalink.** The agent saves the contract to Receipts via `POST /save` and presents a short permalink (e.g., `receipts.liminate.dev/c/a7x9k2Bf`). At Tier 1 (no tools), or if a host classifier blocks the agent's call, the agent provides a self-contained `save_receipt.py` for the user to run instead (not a paste-ready curl — pasting a multi-line curl out of chat corrupts the JSON body; see the session-end save section). The request uses `$RECEIPTS_API_KEY` to authenticate. If the user hasn't set this up, direct them to receipts.liminate.dev/keys.
 2. **Paste manually.** Go to `receipts.liminate.dev`, paste the `.limn` contract, click Run.
 3. **Save for later.** After running a contract, click Save to get a short permalink (e.g., `receipts.liminate.dev/c/a7x9k2Bf`) that loads the contract from storage.
 
