@@ -31,7 +31,7 @@ Add to `~/.claude/settings.json`:
 ```json
 "statusLine": {
   "type": "command",
-  "command": "input=$(cat); dir=$(echo \"$input\" | jq -r '.workspace.current_dir'); model=$(echo \"$input\" | jq -r '.model.display_name'); sid=$(echo \"$input\" | jq -r '.session_id // empty'); remaining=$(echo \"$input\" | jq -r '.context_window.remaining_percentage // empty'); branch=$(git -C \"$dir\" branch --show-current 2>/dev/null); br=${branch:+\" | git:${branch}\"}; ctx=${remaining:+\" | ctx: ${remaining}%\"}; if [ -n \"$sid\" ] && [ -f \"$HOME/.claude/contracts/${sid}.limn\" ]; then contract=\" | contract: ${sid:0:8}\"; else contract=\" | ⚠ no contract\"; fi; printf \"%s%s | %s%s%s\" \"$dir\" \"$br\" \"$model\" \"$ctx\" \"$contract\""
+  "command": "input=$(cat); dir=$(echo \"$input\" | jq -r '.workspace.current_dir'); model=$(echo \"$input\" | jq -r '.model.display_name'); sid=$(echo \"$input\" | jq -r '.session_id // empty'); remaining=$(echo \"$input\" | jq -r '.context_window.remaining_percentage // empty'); branch=$(git -C \"$dir\" branch --show-current 2>/dev/null); br=${branch:+\" | git:${branch}\"}; ctx=${remaining:+\" | ctx: ${remaining}%\"}; if [ -n \"$sid\" ] && [ -f \"$HOME/.claude/contracts/${sid}.limn\" ]; then contract=\" | contract: $(printf '%s' \"$sid\" | cut -c1-8)\"; else contract=\" | ⚠ no contract\"; fi; printf \"%s%s | %s%s%s\" \"$dir\" \"$br\" \"$model\" \"$ctx\" \"$contract\""
 }
 ```
 

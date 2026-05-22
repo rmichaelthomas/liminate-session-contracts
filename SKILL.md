@@ -275,7 +275,7 @@ holds the live contract. This single file:
 
 - is the canonical Tier-2 contract location (replacing the generic
   `session-contract.limn`),
-- is the verification marker the statusline stats to show `contract: <id>`,
+- is the verification marker the statusline checks to show `contract: <id>`,
 - is the input `liminate-contract-inheritance` reads in a later session.
 
 **Trust model:** write the file *only* when you genuinely open a contract.

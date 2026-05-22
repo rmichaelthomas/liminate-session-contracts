@@ -30,4 +30,16 @@ out3=$(printf '%s' '{"session_id":"../escape","hook_event_name":"SessionStart"}'
 [ -z "$out3" ] && f=1 || f=0
 check "$f" 1 "emits no output when session_id would escape contracts dir"
 
+# Case D: escaping session_id must not even create the contracts dir (guard precedes mkdir)
+TMP2=$(mktemp -d)
+trap 'rm -rf "$TMP" "$TMP2"' EXIT
+out4=$(HOME="$TMP2" sh "$HOOK" <<EOF
+{"session_id":"../escape2","hook_event_name":"SessionStart"}
+EOF
+)
+[ -z "$out4" ] && g=1 || g=0
+check "$g" 1 "escape-id emits no output (fresh HOME)"
+[ ! -d "$TMP2/.claude/contracts" ] && h=1 || h=0
+check "$h" 1 "escape-id does NOT create contracts dir (guard precedes mkdir)"
+
 exit "$fail"

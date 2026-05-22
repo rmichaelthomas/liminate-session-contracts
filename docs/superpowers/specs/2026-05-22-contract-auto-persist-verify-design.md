@@ -124,6 +124,7 @@ session start
 - **Accumulating files:** documented as intentional + manually cleanable; no pruner.
 - **Session end:** the keyed file already holds the full contract, matching
   what is saved to Receipts.
+- **Malformed/escaping `session_id`:** a `session_id` containing `/` or `..` is rejected by the hook (silent exit, no dir created), so the contract path cannot escape `~/.claude/contracts/`.
 
 ## Testing
 
