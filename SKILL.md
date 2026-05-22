@@ -208,7 +208,7 @@ The skill runs at whatever tier the host supports. Higher tiers add enforcement;
 | Tier | What's available | Behavior |
 |------|------------------|----------|
 | 1 | Conversation only | Emit the contract delta as a `limn` code block in each response. User can copy/paste to run later. |
-| 2 | File tools + Liminate installed (`pip install liminate`) | Write the contract to disk as `session-contract.limn`. After emitting each delta, run the file through `liminate` and fix parse errors before continuing. |
+| 2 | File tools + Liminate installed (`pip install liminate`) | Write the full contract to `~/.claude/contracts/<session_id>.limn` (the session_id supplied by the SessionStart hook) on open, and rewrite it on every delta. After emitting each delta, run the file through `liminate` and fix parse errors before continuing. See [Session persistence & verification](#session-persistence--verification). |
 | 3 | Persistent storage + session pack | Load the session pack (`liminate --pack references/session_pack.json …`). Use `cite` and `verify` from the pack. Persist the contract across sessions so prior decisions inform later ones. |
 
 ## Starting a contract
@@ -260,6 +260,32 @@ and corrections by emitting `add` statements in the first delta block.
 4. Set `source-state` and `claim-basis` honestly. The default `unscanned` / `none` is correct at the start of most sessions.
 
 After that, every contract mutation flows through Channel 2 — the `limn` block at the end of each response.
+
+### Session persistence & verification
+
+At Tier 2+, the contract is not only emitted as Channel-2 blocks — it is
+persisted to a stable, session-keyed path so an external process (a Claude
+Code statusline) can verify a contract is open.
+
+The `hooks/contract-session-init.sh` SessionStart hook injects your
+`session_id` and the keyed path `~/.claude/contracts/<session_id>.limn` into
+context at session start. When you open a contract, **write the full contract
+to that path**, and **rewrite it on every Channel-2 delta** so the file always
+holds the live contract. This single file:
+
+- is the canonical Tier-2 contract location (replacing the generic
+  `session-contract.limn`),
+- is the verification marker the statusline stats to show `contract: <id>`,
+- is the input `liminate-contract-inheritance` reads in a later session.
+
+**Trust model:** write the file *only* when you genuinely open a contract.
+The hook deliberately does not create it. File present ⟺ a contract was
+opened this session — that is what makes the statusline indicator honest. Do
+not pre-create or touch the file to make the indicator turn green.
+
+Contract files accumulate in `~/.claude/contracts/`. This is intentional —
+inheritance reads prior files. Clean them up manually when desired; there is
+no automatic pruner.
 
 ### When starting a session with a source document
 
@@ -477,6 +503,30 @@ Both verbs use `type_constraint`: `cite` requires the `from` slot to carry the `
 - `examples/design_session_contract.limn` — full contract for an architectural design session.
 - `examples/code_review_contract.limn` — full contract for a code review session.
 - `examples/research_contract.limn` — full contract for a research/investigation session.
+
+## Install — hook & statusline
+
+Two optional pieces make persistence and verification automatic:
+
+1. **SessionStart hook.** Add to `~/.claude/settings.json` so the agent
+   receives its session_id and the write-on-open rule each session:
+
+   ```json
+   "hooks": {
+     "SessionStart": [
+       { "hooks": [ { "type": "command", "command": "<absolute-path>/hooks/contract-session-init.sh" } ] }
+     ]
+   }
+   ```
+
+   Use the absolute path to this skill's `hooks/contract-session-init.sh`.
+
+2. **Statusline.** See [`references/statusline.md`](references/statusline.md)
+   for the command block and what it renders (`contract: <id>` /
+   `⚠ no contract`). Requires `jq`.
+
+The hook supplies the id and rule; the agent writes the contract; the
+statusline verifies it. See [Session persistence & verification](#session-persistence--verification).
 
 ## Receipts — inspection surface
 
