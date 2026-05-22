@@ -9,6 +9,11 @@ set -eu
 input=$(cat)
 sid=$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null || true)
 
+# Reject any session_id that would escape the contracts directory
+case "$sid" in
+  */*|*..*) exit 0 ;;
+esac
+
 mkdir -p "$HOME/.claude/contracts"
 
 [ -z "$sid" ] && exit 0
@@ -18,4 +23,3 @@ context="Session contract persistence: your session_id is ${sid}. When you open 
 
 jq -n --arg ctx "$context" \
   '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: $ctx}}'
-exit 0
