@@ -8,6 +8,18 @@ The Liminate interpreter is the trust root. It runs on your machine. Its verific
 
 Everything downstream of the interpreter — Receipts, permalinks, the inspection UI — is a convenience layer. Removing it removes persistence and visualization. It does not remove verification.
 
+## What the verification primitives prove and do not prove
+
+Each primitive checks one specific property. None of them prove the claim is true, that the source is authentic, or that the conclusion is correct. They prove that the agent's output is grounded in the source material it declared — nothing more.
+
+**`cite <text> from <source>`** proves the exact quoted text appears somewhere in the named source. It does not prove the text is relevant, that it was not cherry-picked, or that the surrounding context supports the claim. A trivially short substring (a single word, a common phrase) will always pass and proves nothing useful. Agents should cite specific, distinctive strings — numbers, proper nouns, multi-word phrases — not generic words.
+
+**`verify <claim> from <source>`** proves two records agree or disagree field by field. It does not prove either record is correct. Two records that contain the same wrong value will produce `verification-status: match`. The value of `verify` is surfacing divergence, not confirming truth.
+
+**`measure <value> from <source> within <tolerance>`** proves a number exists in the source text that is within the stated tolerance of the claimed value. It does not prove the matched number is the right one — if the source contains many numbers, the interpreter picks the closest, which may come from a different statistic, table, or context. The value of `measure` is distinguishing precision noise (the agent rounded 9.4 to 9, close enough) from fabrication (no number near the claimed value exists in the source at all).
+
+**The honest framing:** a passing receipt means the agent's claims are textually grounded in the sources the agent declared. A failing receipt means they are not. Neither a pass nor a fail tells you whether the claims are true — only whether they are traceable to stated sources. The receipt is an audit trail, not a truth oracle.
+
 ## Three data paths
 
 ### Path 1 — Local only
