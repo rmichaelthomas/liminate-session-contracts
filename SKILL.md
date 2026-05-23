@@ -596,7 +596,7 @@ Two words are especially relevant for contract inheritance:
 liminate --pack references/session_pack.json examples/research_contract.limn
 ```
 
-The pack adds 5 words:
+The pack adds 6 words (3 nouns + 3 verbs):
 
 - **`claim`** (noun) — descriptor for assertions awaiting verification
 - **`source`** (noun) — descriptor for primary sources

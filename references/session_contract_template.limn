@@ -22,8 +22,9 @@ when claim-basis is equal to "inference" unless source-state is equal to "verifi
 when claim-basis is equal to "verified"
   show "OK: claims grounded in verified source"
 
-when session-corrections is not equal to "none"
-  show "ACTIVE CORRECTIONS — consult before every response"
+-- session-corrections handler: the SKILL.md instructs the model to consult
+-- corrections before every response. A when handler cannot enforce per-turn
+-- consultation; the list's presence in the contract state is the mechanism.
 
 show "--- state snapshot ---"
 show source-state
