@@ -105,7 +105,9 @@ At session end, do three things in order:
    remember a list called session-corrections with "none"
    ```
 
-2. **Generate a Receipts permalink.** Save the contract to the Receipts inspection surface and present the permalink.
+2. **Sensitivity check before saving.** Before saving to Receipts, scan the contract for `remember a source called` and `remember a claim called` statements. If any quoted content could contain sensitive material — proprietary code, financial data, customer information, medical records, credentials, or internal documents — ask the user: "This contract contains source excerpts that may be sensitive. Save to Receipts, or keep local-only?" If the user chooses local-only, skip the Receipts save, present the final contract as a copyable `limn` block, and note that it can be run locally with `liminate contract.limn --pack references/session_pack.json`. See [docs/TRUST-BOUNDARY.md](docs/TRUST-BOUNDARY.md) for the full data-flow description and [docs/LOCAL-ONLY.md](docs/LOCAL-ONLY.md) for the local-only walkthrough.
+
+3. **Generate a Receipts permalink.** Save the contract to the Receipts inspection surface and present the permalink.
 
    **Before saving, resolve `parent_id`.** If this session inherited
    from a prior contract (i.e., the `liminate-contract-inheritance` skill
@@ -206,7 +208,7 @@ At session end, do three things in order:
 
    **Do NOT generate fragment-encoded URLs (`#contract=<base64>`) for contracts longer than 5 lines.** The encoding is token-expensive, produces unwieldy URLs, and takes minutes to generate. Fragment URLs are acceptable only for very short demo contracts. For any real session contract, use `POST /save`.
 
-3. **Close the contract.** After emitting the final contract and the permalink, the contract is closed. Do not emit any further `limn` delta blocks in this conversation. If the user continues talking after session end (follow-up questions, corrections, new tasks), respond normally in prose but do not append to the contract. The contract is a record of the session that ended — not a living document that grows indefinitely.
+4. **Close the contract.** After emitting the final contract and the permalink (or the local-only alternative), the contract is closed. Do not emit any further `limn` delta blocks in this conversation. If the user continues talking after session end (follow-up questions, corrections, new tasks), respond normally in prose but do not append to the contract. The contract is a record of the session that ended — not a living document that grows indefinitely.
 
 ## Pre-commit gate
 
