@@ -113,9 +113,21 @@ At session end, do three things in order:
    curl -s -X POST https://receipts.liminate.dev/save \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer $RECEIPTS_API_KEY" \
-     -d '{"source": "<full contract text, JSON-escaped>", "label": "<session label>"}' \
+     -d '{"source": "<full contract text, JSON-escaped>", "label": "<session label>", "agent_id": "<model identifier>", "session_id": "<session identifier>", "parent_id": "<prior contract Receipts ID, or omit>"}' \
      | python3 -c "import sys,json; print('https://receipts.liminate.dev' + json.load(sys.stdin)['contract']['permalink'])"
    ```
+
+   **Save payload fields:**
+
+   | Field | Required | Value | When to include |
+   |---|---|---|---|
+   | `source` | yes | The full contract text, JSON-escaped | Always |
+   | `label` | no | A short session label (e.g., `"design review · 2026-05-23"`) | Always, when available |
+   | `agent_id` | no | The model identifier (e.g., `"claude-opus-4-6"`, `"gpt-4o"`, `"gemini-2.5-pro"`) | Always — identifies who generated the claims in this contract |
+   | `session_id` | no | A unique session identifier (e.g., the value injected by the SessionStart hook, or a conversation ID from the host platform) | Always at Tier 2+ where a session ID is available |
+   | `parent_id` | no | The Receipts contract ID of the prior session's contract (e.g., `"HW496KG7"`) | When this session inherited from a prior contract. See [Inheritance and lineage](#inheritance-and-lineage). Omit the field entirely (do not send `null`) when there is no parent. |
+
+   All three identity fields are nullable. Omitting them is safe — the contract saves without them. But including them is what makes the receipt answer "who generated this" (agent_id), "in which session" (session_id), and "inheriting from what" (parent_id). A contract without these fields is an orphan — inspectable but not traceable.
 
    `$RECEIPTS_API_KEY` is an environment variable the user sets up once. If the variable is not set, tell the user: "To save contracts to your account, generate an API key at receipts.liminate.dev/keys and run the setup command shown there."
 
@@ -144,7 +156,18 @@ At session end, do three things in order:
       contract = """<full contract text here, unescaped — triple-quoted handles the newlines>"""
       key = os.environ.get("RECEIPTS_API_KEY")
       print("KEY:", "set" if key else "NOT SET", f"({len(key)} chars)" if key else "")
-      body = json.dumps({"label": "<session label>", "source": contract}).encode()
+      payload = {"label": "<session label>", "source": contract}
+      # Include identity fields when available.
+      # agent_id: the model identifier (e.g., "claude-opus-4-6")
+      # session_id: the session/conversation identifier, if known
+      # parent_id: the Receipts ID of the prior session's contract, if this session inherited from one
+      agent_id = "<model identifier, or remove this line if unknown>"
+      session_id = "<session identifier, or remove this line if unknown>"
+      parent_id = "<prior contract Receipts ID, or remove this line if no parent>"
+      if agent_id: payload["agent_id"] = agent_id
+      if session_id: payload["session_id"] = session_id
+      if parent_id: payload["parent_id"] = parent_id
+      body = json.dumps(payload).encode()
       req = urllib.request.Request("https://receipts.liminate.dev/save", data=body, method="POST")
       req.add_header("Content-Type", "application/json")
       req.add_header("Authorization", "Bearer " + (key or ""))
@@ -251,11 +274,57 @@ the blank template. The preamble carries forward:
 - `includes` guards that fire on initial evaluation, showing which
   constraints are active
 
+If the prior contract was saved to Receipts, record its ID for use as
+`parent_id` when saving the new session's contract. See
+[Inheritance and lineage](#inheritance-and-lineage).
+
 **Tier 1 (conversation only):** If prior contract deltas are visible
 in the conversation history, manually carry forward locked decisions
 and corrections by emitting `add` statements in the first delta block.
 
+If the prior contract was saved to Receipts, record its ID for use as
+`parent_id` when saving the new session's contract. See
+[Inheritance and lineage](#inheritance-and-lineage).
+
 **No prior contracts:** Start from the blank template (steps 1–4 below).
+
+### Inheritance and lineage
+
+When a session inherits from a prior contract, the new contract should
+record the prior contract's Receipts ID as `parent_id` in the save
+payload. This creates a queryable lineage chain at Receipts — each
+contract points to its parent, and the inspection surface shows the
+full chain (ancestors and descendants) as a timeline on the contract
+detail page.
+
+**How to obtain the parent ID:**
+
+- **Prior contract was saved to Receipts (most common).** The parent
+  ID is the short alphanumeric ID from the permalink — e.g., if the
+  prior contract's permalink is `receipts.liminate.dev/c/HW496KG7`,
+  the parent ID is `HW496KG7`.
+- **Prior contract is a local `.limn` file (Tier 2+).** If the file
+  was previously saved to Receipts, check the session history or
+  Receipts export (`GET /api/v1/export`) for its ID. If it was never
+  saved, save it first via `POST /save`, capture the returned ID, then
+  use that as `parent_id` for the new contract.
+- **Prior contract is in conversation history (Tier 1).** If a
+  permalink was generated in a prior session, use its ID. If no
+  permalink exists, the lineage link cannot be established — record
+  the inheritance in the contract source (via `inherited` preamble)
+  but omit `parent_id` from the save payload.
+
+**When NOT to include `parent_id`:**
+
+- First session with no prior contracts — no parent exists.
+- Session that does not use the inheritance skill — no decisions were
+  carried forward, so no lineage link is meaningful.
+- Prior contract was never saved to Receipts and saving it now is not
+  practical — omit `parent_id` rather than fabricate one.
+
+Omitting `parent_id` is always safe. The contract saves and inspects
+normally — it just won't appear in a lineage chain. Including it when
+inheritance was used is what makes the chain visible.
 
 ### From the template
 
