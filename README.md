@@ -120,6 +120,14 @@ Session contracts and Karpathy-style instruction sets solve different problems. 
 - **The gate's catch behavior is unmeasured.** Across 101 gated turns, the interpreter gate never fired. Correctly designed infrastructure, unexercised revision path.
 - **Lists must be `remember`ed before `add`.** The interpreter rejects `add "X" to <list>` with `ERROR_SEMANTIC` if `<list>` was not previously `remember`ed. In Receipts this renders as an empty Tracked decisions / Open questions / Session corrections section even though the contract source contains the `add` statements. SKILL.md (as of `c89642f`, May 2026) requires the agent to prepend a baseline preamble declaring the standard lists before saving any contract. The template ships with the declarations; ad-hoc contracts must include them explicitly. The `benchmarks/bench_list_seeding.py` guard catches regressions of this behavior.
 
+## Local-only mode
+
+Session contracts run entirely on your machine with no server dependency. See [docs/LOCAL-ONLY.md](docs/LOCAL-ONLY.md) for a complete walkthrough: install the interpreter, write a contract, run it, read the output — no account, no network, no data leaving your device.
+
+## Security and data flow
+
+See [docs/TRUST-BOUNDARY.md](docs/TRUST-BOUNDARY.md) for a description of what data moves where across the three usage modes (local-only, Receipts save, fragment-encoded inspection), what the server can and cannot see, and what is not yet built.
+
 ## License
 
 Apache 2.0. See [LICENSE](LICENSE).
