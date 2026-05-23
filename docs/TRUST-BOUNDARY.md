@@ -131,6 +131,26 @@ Session contracts are agent-facing artifacts. When an agent reads a contract —
 
 **Lineage privacy.** When a contract chain crosses ownership boundaries, private contracts owned by other users appear in lineage responses as topology-only entries: `id`, `created_at`, `parent_id`, and `"private": true`. Their label, agent_id, and pass_rate are withheld.
 
+## Backend security posture
+
+This section states exactly what the Receipts backend (`receipts.liminate.dev`) does and does not provide as of the date at the bottom of this document. It is written for a security reviewer evaluating the hosted service.
+
+**Tenant isolation.** Per-user, not per-organization. Each contract has an `owner_id`. Private contracts are visible only to their owner. There is no team, organization, or workspace model. The `team_id` column exists in the database schema but is unused — it is reserved for future multi-tenant features.
+
+**API key management.** Keys are user-scoped — each key maps to one user. Keys are stored as SHA-256 hashes; the plaintext is shown once at creation. Users can create multiple keys (`POST /api/v1/keys`) and delete them individually (`DELETE /api/v1/keys/{key_id}`, owner-checked). There is no per-key permission scoping (all keys for a user have identical access), no key expiry, no forced rotation policy, and no audit log of key usage.
+
+**Rate limiting.** IP-based hourly caps on saves (plan-dependent) and exports (5/hour per user). No per-key rate limiting. No per-user rate limiting beyond the plan's `max_saves_per_hour` and `max_stored_contracts`. IP-based limits are circumventable by distributed clients.
+
+**Session security.** Session cookies are signed with `RECEIPTS_SESSION_SECRET` (environment variable). If the variable is not set, the server falls back to a hardcoded development secret. This fallback is logged but not blocked — a production deployment without the environment variable set would use a known secret. Railway deployments should always set this variable.
+
+**Request logging.** No application-level request logging beyond what Railway's infrastructure provides. There is no audit trail of who accessed, viewed, or exported which contracts.
+
+**Database.** SQLite on a Railway persistent volume. WAL mode enabled. Foreign keys enforced. No encryption at rest beyond Railway's volume encryption. No backup automation beyond Railway's volume snapshots.
+
+**What exists and works:** per-user ownership, private/unlisted/public visibility, SHA-256 key hashing, SHA-256 source hashing (tamper evidence), lineage privacy for cross-owner chains, plan-based storage limits, IP-based rate limiting, GitHub OAuth with `user:email` scope only, severity-based save blocking for contracts with verification failures.
+
+**What does not exist:** per-key scoping or expiry, key rotation enforcement, key usage logging, org/team isolation, per-user rate limiting, application-level request audit log, database encryption at rest, automated backups, session secret enforcement (fallback to dev secret is not blocked).
+
 ## What is not yet built
 
 This section names capabilities that a Fortune 500 security review would expect and that do not yet exist. They are on the roadmap, not in production.
@@ -146,6 +166,10 @@ This section names capabilities that a Fortune 500 security review would expect 
 - **Self-host packaging** (the server is open-source and deployable, but there is no documented self-host guide, Docker image, or Helm chart)
 - **On-premises / VPC deployment** option
 - **Rate limiting** beyond IP-based hourly caps on saves and exports
+- **API key expiry and forced rotation**
+- **Per-key permission scoping** (read-only, endpoint restrictions)
+- **Organization / team isolation** (multi-tenant beyond per-user)
+- **Session secret enforcement** (block startup if `RECEIPTS_SESSION_SECRET` is not set)
 
 ## Version contract
 
