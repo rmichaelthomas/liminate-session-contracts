@@ -107,6 +107,16 @@ At session end, do three things in order:
 
 2. **Generate a Receipts permalink.** Save the contract to the Receipts inspection surface and present the permalink.
 
+   **Before saving, resolve `parent_id`.** If this session inherited
+   from a prior contract (i.e., the `liminate-contract-inheritance` skill
+   was used, or decisions were manually carried forward from a prior
+   session), run the discovery procedure in
+   [Inheritance and lineage](#inheritance-and-lineage) to obtain the prior
+   contract's Receipts ID. Include it as `parent_id` in the save payload.
+   If no inheritance was used, omit `parent_id`. Do not skip this step —
+   a contract that inherited decisions but ships without `parent_id` breaks
+   the lineage chain.
+
    **Tier 2+ (bash/file tools available):** Call the Receipts API directly:
 
    ```bash
@@ -141,8 +151,16 @@ At session end, do three things in order:
    If you hit the auto-mode denial, do **not** try to tunnel around it (wrapping the curl in a python script, a heredoc, or a test runner — the classifier flags that as an Auto-Mode Bypass and the user loses trust). Instead, tell the user to add a one-line allow rule scoped to this exact endpoint:
 
    ```json
-   "Bash(curl -s -X POST https://receipts.liminate.dev/save *)"
+   "Bash(curl -s * https://receipts.liminate.dev/* *)"
    ```
+
+   This single rule covers both the `POST /save` call and the
+   `GET /api/v1/export` call used by the [parent_id discovery
+   procedure](#inheritance-and-lineage) — both hit the same classifier
+   for the same reason (a `Bearer` secret to an external endpoint). If
+   you prefer to scope more tightly, add two rules — one for `…/save`
+   and one for `…/api/v1/export` — but the wildcard above is the
+   simplest deterministic allow.
 
    via `/permissions` or in their `settings.local.json` `allow` array, then restart so permissions reload. An explicit allow rule is deterministic and bypasses the classifier; auto-mode is a model judgment that can change between sessions. The agent **cannot** add this rule itself — editing a permissions allow-list is a hard-blocked self-modification. Hand the rule to the user and let them apply it. (Verified live May 22, 2026: with the allow rule in place, the agent's direct `curl … /save` succeeds with no denial.) The allow rule only matters when running unattended — in interactive mode the user can skip it entirely and just approve the prompt. Note this classifier is Claude Code's; other agents (Codex, Cursor, …) have their own permission or sandbox policies and may prompt, block, or allow the call differently.
 
@@ -297,22 +315,55 @@ contract points to its parent, and the inspection surface shows the
 full chain (ancestors and descendants) as a timeline on the contract
 detail page.
 
-**How to obtain the parent ID:**
+**How to obtain the parent ID — discovery procedure:**
 
-- **Prior contract was saved to Receipts (most common).** The parent
-  ID is the short alphanumeric ID from the permalink — e.g., if the
-  prior contract's permalink is `receipts.liminate.dev/c/HW496KG7`,
-  the parent ID is `HW496KG7`.
-- **Prior contract is a local `.limn` file (Tier 2+).** If the file
-  was previously saved to Receipts, check the session history or
-  Receipts export (`GET /api/v1/export`) for its ID. If it was never
-  saved, save it first via `POST /save`, capture the returned ID, then
-  use that as `parent_id` for the new contract.
-- **Prior contract is in conversation history (Tier 1).** If a
-  permalink was generated in a prior session, use its ID. If no
-  permalink exists, the lineage link cannot be established — record
-  the inheritance in the contract source (via `inherited` preamble)
-  but omit `parent_id` from the save payload.
+At session end, before building the save payload, run this lookup to
+find the prior contract's Receipts ID. This is not optional when
+inheritance was used — the lineage feature only works if `parent_id`
+is included, and the agent is the only one who can perform the lookup.
+
+**Tier 2+ (bash/file tools available):**
+
+1. Check whether the prior contract's Receipts ID is already known —
+   from the resume prompt, conversation history, or a local file that
+   recorded it. If found, use it directly and skip steps 2–3.
+
+2. Query the user's contract history:
+
+   ```bash
+   curl -s https://receipts.liminate.dev/api/v1/export \
+     -H "Authorization: Bearer $RECEIPTS_API_KEY" \
+     | python3 -c "
+   import sys, json
+   data = json.load(sys.stdin)
+   for c in data.get('contracts', []):
+       print(c['id'], c.get('label', ''), c.get('created_at', ''))
+   "
+   ```
+
+   This prints every saved contract's ID, label, and timestamp. Find
+   the prior session's contract by label or by recency (most recent
+   first). The ID is the short alphanumeric string in the first column.
+
+3. Use the matched ID as `parent_id` in the save payload. If no match
+   is found (the prior contract was never saved to Receipts), save the
+   prior contract first if its source is available:
+
+   ```bash
+   curl -s -X POST https://receipts.liminate.dev/save \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer $RECEIPTS_API_KEY" \
+     -d '{"source": "<prior contract text, JSON-escaped>", "label": "<prior session label>"}' \
+     | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['contract']['id'])"
+   ```
+
+   Use the returned ID as `parent_id`.
+
+**Tier 1 (conversation only):** If a permalink was generated in a
+prior session, extract the ID from the URL (e.g.,
+`receipts.liminate.dev/c/HW496KG7` → `HW496KG7`). If no permalink
+exists and the user cannot run the export query, the lineage link
+cannot be established — omit `parent_id`.
 
 **When NOT to include `parent_id`:**
 
