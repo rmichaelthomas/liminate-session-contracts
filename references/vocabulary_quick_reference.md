@@ -1,8 +1,8 @@
 # Liminate vocabulary — quick reference
 
-Liminate's base vocabulary is fixed at **54 reserved words**. Every word in a `.limn` file must either be one of these reserved words or a user-defined name (hyphenated, no spaces). Source of truth: [`src/liminate/vocabulary.py`](https://github.com/rmichaelthomas/liminate/blob/main/src/liminate/vocabulary.py).
+Liminate's base vocabulary is fixed at **58 reserved words**. Every word in a `.limn` file must either be one of these reserved words or a user-defined name (hyphenated, no spaces). Source of truth: [`src/liminate/vocabulary.py`](https://github.com/rmichaelthomas/liminate/blob/main/src/liminate/vocabulary.py).
 
-## Verbs (19)
+## Verbs (21)
 
 | Verb | Purpose |
 |------|---------|
@@ -20,17 +20,21 @@ Liminate's base vocabulary is fixed at **54 reserved words**. Every word in a `.
 | `remove` | Retract an item from a list. Errors if the item is not present. |
 | `weakens` | Attach autonomous linear decay to a numeric value (falls to zero over a stated period of ticks). |
 | `require` | Halt with `REQUIREMENT_NOT_MET` if a condition fails; silent on pass. |
+| `forbid` | Halt with `PROHIBITION_VIOLATED` if a condition holds; silent on false. The mirror of `require`. |
+| `permit` | Emit an informational `Permitted:` line if a condition holds; silent on false. Never halts (the `expect` pattern). |
 | `assign` | Store an item-to-recipient mapping (`assign review-task to "compliance-team"`). |
 | `expect` | Like `require`, but emits a divergence output line on failure and continues with `SUCCESS` (informational, non-halting). |
 | `sort` | Reorder a list in place by a field (`sort the orders by total [in reverse]`). |
 | `compare` | Compare two values into a `comparison` record (`status` + `divergences`). |
 | `transform` | Mutate each element of a list in place via an arithmetic expression. |
 
-## Connectives (20)
+## Connectives (22)
 
-`where`, `and`, `or`, `from`, `with`, `called`, `to`, `how`, `as`, `of`, `if`, `otherwise`, `when`, `unless`, `includes`, `within`, `over`, `then`, `by`, `because`
+`where`, `and`, `or`, `from`, `with`, `called`, `to`, `how`, `as`, `of`, `if`, `otherwise`, `when`, `unless`, `includes`, `within`, `over`, `then`, `by`, `because`, `starting`, `until`
 
 `because` attaches a quoted rationale to any verb statement as inert metadata (statement-terminal): `require amount is above 50000 because "SOX compliance"`. Rendered and inspected, never executed.
+
+`starting` and `until` are statement-initial temporal modifiers that attach quoted ISO 8601 dates as inert metadata — an effective date and a sunset clause: `starting "2025-07-01" until "2025-12-31" require amount is above 50000`. Temporal evaluation is a product-layer concern, never interpreter runtime.
 
 ## Operators (8 single-word + 3 multi-word)
 
@@ -58,7 +62,7 @@ None. `transform` and `compare` were the last deferred slots; both are now activ
 
 ## Counting
 
-19 verbs + 20 connectives + 8 single-word operators + 3 multi-word trigger words (`equal`/`multiplied`/`divided`) + 3 articles + 1 declaration + 0 deferred = **54 reserved words**. The delimiter `:` is a single character, not a word in the vocabulary tables, so it is not counted in the 54.
+21 verbs + 22 connectives + 8 single-word operators + 3 multi-word trigger words (`equal`/`multiplied`/`divided`) + 3 articles + 1 declaration + 0 deferred = **58 reserved words**. The delimiter `:` is a single character, not a word in the vocabulary tables, so it is not counted in the 58.
 
 ## Naming rules
 
