@@ -4,6 +4,8 @@ A small file that tracks what an agent has verified, what it inferred, and what'
 
 The note is short, diff-able, and runnable. The bound is the point.
 
+*Part of the Prosecode family — a set of tools for writing, verifying, and transferring structured reasoning.*
+
 ## What it does
 
 A session contract travels with a working session. It records — in plain words — whether the primary source has been read, what the current claims are based on, which decisions have been locked, which questions are still open, and which corrections the user has given about how the model should engage.
@@ -21,9 +23,9 @@ add "open: rate-limit strategy" to questions
 
 When the source is gone and only the contract remains, the model retrieves or discloses — it does not fabricate. **252 cross-session continuity probes, zero fabrications** across four rounds of benchmarking on Opus 4.7 and Sonnet 4.6.
 
-## Part of the Liminate family
+## Built by Liminate
 
-Liminate is a prose-as-syntax programming language where plain English sentences execute directly. These five repos form a system for writing, verifying, and transferring structured reasoning.
+Liminate is a prose-as-syntax language where plain English sentences execute directly. These five repos form a system for writing, verifying, and transferring structured reasoning.
 
 | | Repo | What it does |
 |---|---|---|
@@ -76,6 +78,8 @@ The agent responds in two channels. Channel 1 is the prose answer — the work i
 When the user corrects the model's approach — "don't defer," "check the actual code," "give me everything" — the correction is recorded in the contract as a session correction. The model consults the corrections list before every subsequent response. Corrections persist across sessions: the next model that reads the contract starts with the calibration already applied.
 
 At the end of the session, the accumulated `.limn` file is yours. Save it, diff it, hand it to another agent, run it through the interpreter.
+
+The contracts this skill produces can be scanned at [receipts.liminate.dev](https://receipts.liminate.dev) — paste a `.limn` contract (or open a session-end permalink) and Receipts runs it through the interpreter, rendering reasoning state, citation checks, tracked decisions, open questions, and an annotated source view. That's the one-click path from a working session to a rendered inspection.
 
 ### The session pack
 
