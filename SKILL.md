@@ -47,7 +47,7 @@ Your answer to the user. Do the work, give the analysis, state the conclusion. D
 
 ### Channel 2 — Contract delta block
 
-After the prose, emit a fenced code block tagged `limn` containing **only** Liminate statements that mutate the contract this turn: `remember`, `add`, `cite`, `verify`. No prose inside the block. No commentary. If no contract state changed this turn, omit the block entirely.
+After the prose, emit a fenced code block tagged `limn` containing **only** Liminate statements that mutate the contract this turn: `remember`, `add`, `remove`, `cite`, `verify`. No prose inside the block. No commentary. If no contract state changed this turn, omit the block entirely.
 
 Format:
 
@@ -125,7 +125,7 @@ The skill runs at whatever tier the host supports. Higher tiers add enforcement;
 
 ## Vocabulary constraint (critical)
 
-Liminate has 58 reserved words (21 verbs, 22 connectives, 8 operators, 1 declaration). See `references/vocabulary_quick_reference.md` for the full list. The contract must use only:
+Liminate has 58 reserved words (21 verbs, 22 connectives, 8 operators, 3 articles, 3 multi-word reserved, 1 declaration). See `references/vocabulary_quick_reference.md` for the full list. The contract must use only:
 
 - One of the 58 reserved words
 - A user-defined hyphenated name (e.g. `tracked-decisions`)
@@ -147,7 +147,7 @@ Two words are especially relevant for contract inheritance:
   is not found. Used for clean decision reversal instead of adding
   contradicting items.
 
-## Session pack — `cite` and `verify`
+## Session pack — `cite`, `verify`, and `measure`
 
 `references/session_pack.json` is loadable today against the Liminate interpreter:
 
@@ -193,7 +193,7 @@ Supporting reference material:
 
 - `references/session_contract_template.limn` — starting template that parses and runs against the Liminate interpreter.
 - `references/vocabulary_quick_reference.md` — the 58-word vocabulary.
-- `references/session_pack.json` — loadable session pack (`claim`, `source`, `decision`, `cite`, `verify`).
+- `references/session_pack.json` — loadable session pack (`claim`, `source`, `decision`, `cite`, `verify`, `measure`).
 - `references/statusline.md` — the statusline command block and what it renders.
 - `examples/design_session_contract.limn` — full contract for an architectural design session.
 - `examples/code_review_contract.limn` — full contract for a code review session.
