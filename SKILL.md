@@ -276,13 +276,13 @@ Supporting reference material:
 
 ## Receipts — inspection surface
 
-Receipts (`https://receipts.liminate.dev`) is the hosted inspection surface for session contracts. It runs the contract through the Liminate interpreter with the session pack loaded and renders the result as a seven-section inspection view: reasoning state, warnings, session corrections, tracked decisions, open questions, citation checks, and annotated source.
+Receipts (`https://liminate.dev/receipts`) is the hosted inspection surface for session contracts. It runs the contract through the Liminate interpreter with the session pack loaded and renders the result as a seven-section inspection view: reasoning state, warnings, session corrections, tracked decisions, open questions, citation checks, and annotated source.
 
 Three ways to use it:
 
-1. **Click the session-end permalink.** The agent saves the contract to Receipts via `POST /save` and presents a short permalink (e.g., `receipts.liminate.dev/c/a7x9k2Bf`). At Tier 1 (no tools), or if a host classifier blocks the agent's call, the agent provides a self-contained `save_receipt.py` for the user to run instead (not a paste-ready curl — pasting a multi-line curl out of chat corrupts the JSON body; see [`references/save-procedure.md`](references/save-procedure.md)). The request uses `$RECEIPTS_API_KEY` to authenticate. If the user hasn't set this up, direct them to receipts.liminate.dev/keys.
-2. **Paste manually.** Go to `receipts.liminate.dev`, paste the `.limn` contract, click Run.
-3. **Save for later.** After running a contract, click Save to get a short permalink (e.g., `receipts.liminate.dev/c/a7x9k2Bf`) that loads the contract from storage.
+1. **Click the session-end permalink.** The agent saves the contract to Receipts via `POST /save` and presents a short permalink (e.g., `liminate.dev/c/a7x9k2Bf`). At Tier 1 (no tools), or if a host classifier blocks the agent's call, the agent provides a self-contained `save_receipt.py` for the user to run instead (not a paste-ready curl — pasting a multi-line curl out of chat corrupts the JSON body; see [`references/save-procedure.md`](references/save-procedure.md)). The request uses `$RECEIPTS_API_KEY` to authenticate. If the user hasn't set this up, direct them to liminate.dev/keys.
+2. **Paste manually.** Go to `liminate.dev/receipts`, paste the `.limn` contract, click Run.
+3. **Save for later.** After running a contract, click Save to get a short permalink (e.g., `liminate.dev/c/a7x9k2Bf`) that loads the contract from storage.
 
 The inspection surface checks `cite` statements by running them through the Liminate interpreter's `substring_check` execution type. The interpreter checks — not the model. A failing `cite` shows as a red ✗ with the interpreter's error message.
 

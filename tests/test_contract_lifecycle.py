@@ -263,7 +263,7 @@ def test_save_only_uploads_on_attended_plus_consent(mod, tmp_path, monkeypatch):
     posted = []
     monkeypatch.setattr(mod, "_upload",
                         lambda src, key, **k: posted.append((src, key)) or
-                        "https://receipts.liminate.dev/c/TESTID")
+                        "https://liminate.dev/c/TESTID")
     env = {"HOME": str(tmp_path), "XDG_DATA_HOME": "", "LIMINATE_CONTRACTS_DIR": "",
            "RECEIPTS_API_KEY": "secret-key-present"}
     contract = 'remember a string called source-state with "verified"\n'
@@ -271,7 +271,7 @@ def test_save_only_uploads_on_attended_plus_consent(mod, tmp_path, monkeypatch):
                          consent_upload=True, contract_src=contract, isatty=False)
     assert len(posted) == 1
     assert result["uploaded"] is True
-    assert result["permalink"] == "https://receipts.liminate.dev/c/TESTID"
+    assert result["permalink"] == "https://liminate.dev/c/TESTID"
 
 
 def test_save_no_key_never_blocks_local_persist(mod, tmp_path, monkeypatch):
@@ -314,6 +314,17 @@ def test_sensitivity_scan_clears_benign_content(mod):
 # --------------------------------------------------------------------------
 # Hygiene: no coupling to any non-public tool, stdlib-only
 # --------------------------------------------------------------------------
+
+def test_helper_targets_the_current_receipts_host(mod):
+    # Receipts moved from the receipts.liminate.dev subdomain to the apex
+    # liminate.dev (API paths unchanged, UI now at /receipts).
+    assert mod.RECEIPTS_BASE == "https://liminate.dev"
+    assert mod.SAVE_URL == "https://liminate.dev/save"
+
+
+def test_helper_has_no_dead_receipts_subdomain():
+    assert "receipts.liminate.dev" not in HELPER_PATH.read_text()
+
 
 def test_helper_does_not_reference_domain_loader():
     text = HELPER_PATH.read_text().lower()

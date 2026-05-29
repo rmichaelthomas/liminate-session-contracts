@@ -40,7 +40,7 @@ Nothing leaves the machine. No network calls. No telemetry. No phone-home. The i
 ```
 ┌─────────────┐      ┌──────────────────────────┐      ┌───────────────┐
 │  .limn file  │ ───▶ │  POST /save              │ ───▶ │  SQLite on    │
-│  (your disk) │      │  receipts.liminate.dev    │      │  Railway vol  │
+│  (your disk) │      │  liminate.dev             │      │  Railway vol  │
 └─────────────┘      │  + Bearer token           │      └───────────────┘
                      └──────────────────────────┘
                                │
@@ -49,7 +49,7 @@ Nothing leaves the machine. No network calls. No telemetry. No phone-home. The i
                      (e.g. /c/a7x9k2Bf)
 ```
 
-The agent or user sends the full contract source text to `receipts.liminate.dev/save` with a Bearer token (API key) or session cookie (GitHub OAuth). The server runs the contract through its bundled copy of the interpreter, stores the source and results in SQLite, and returns a permalink.
+The agent or user sends the full contract source text to `liminate.dev/save` with a Bearer token (API key) or session cookie (GitHub OAuth). The server runs the contract through its bundled copy of the interpreter, stores the source and results in SQLite, and returns a permalink.
 
 **What the server receives and stores:**
 
@@ -133,7 +133,7 @@ Session contracts are agent-facing artifacts. When an agent reads a contract —
 
 ## Backend security posture
 
-This section states exactly what the Receipts backend (`receipts.liminate.dev`) does and does not provide as of the date at the bottom of this document. It is written for a security reviewer evaluating the hosted service.
+This section states exactly what the Receipts backend (`liminate.dev`) does and does not provide as of the date at the bottom of this document. It is written for a security reviewer evaluating the hosted service.
 
 **Tenant isolation.** Per-user, not per-organization. Each contract has an `owner_id`. Private contracts are visible only to their owner. There is no team, organization, or workspace model. The `team_id` column exists in the database schema but is unused — it is reserved for future multi-tenant features.
 
@@ -181,4 +181,4 @@ The Receipts server records `liminate_version` and `pack_version` on every saved
 
 ---
 
-*This document describes the system as deployed at `receipts.liminate.dev` on May 23, 2026. Interpreter version: 0.10.0. Session pack version: 0.3.0. Receipts API version: 0.3.0.*
+*This document describes the system as deployed on May 23, 2026 (then served at `receipts.liminate.dev`, since consolidated to `liminate.dev`). Interpreter version: 0.10.0. Session pack version: 0.3.0. Receipts API version: 0.3.0.*

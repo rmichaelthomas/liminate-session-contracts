@@ -94,6 +94,6 @@ actually happened.
 - No `--session-id` → one is generated, recorded in the contract, and printed.
 - No consent signal → unattended → local-only.
 - No `$RECEIPTS_API_KEY` → local persistence still succeeds; only the upload
-  path reports the key is unset (see `receipts.liminate.dev/keys`).
+  path reports the key is unset (see `liminate.dev/keys`).
 - `liminate` not importable → `init` validation degrades to a parse check; the
   contract is still written.
