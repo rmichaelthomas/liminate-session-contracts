@@ -80,7 +80,7 @@ No server involved. The chain lives in your filesystem or your repository.
 
 ## When to add Receipts
 
-Receipts (`receipts.liminate.dev`) adds three things that local mode does not provide:
+Receipts (`liminate.dev/receipts`) adds three things that local mode does not provide:
 
 - **Permalinks.** A short URL that loads the contract in a rendered inspection view.
 - **Lineage.** Parent/child relationships between contracts, queryable via API.

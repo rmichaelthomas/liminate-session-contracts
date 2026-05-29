@@ -79,7 +79,7 @@ When the user corrects the model's approach — "don't defer," "check the actual
 
 At the end of the session, the accumulated `.limn` file is yours. Save it, diff it, hand it to another agent, run it through the interpreter.
 
-The contracts this skill produces can be scanned at [receipts.liminate.dev](https://receipts.liminate.dev) — paste a `.limn` contract (or open a session-end permalink) and Receipts runs it through the interpreter, rendering reasoning state, citation checks, tracked decisions, open questions, and an annotated source view. That's the one-click path from a working session to a rendered inspection.
+The contracts this skill produces can be scanned at [liminate.dev/receipts](https://liminate.dev/receipts) — paste a `.limn` contract (or open a session-end permalink) and Receipts runs it through the interpreter, rendering reasoning state, citation checks, tracked decisions, open questions, and an annotated source view. That's the one-click path from a working session to a rendered inspection.
 
 ### The session pack
 

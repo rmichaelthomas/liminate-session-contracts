@@ -50,11 +50,11 @@ the lineage chain.
 **Tier 2+ (bash/file tools available):** the helper's `save --attended true --consent upload` makes exactly this call for you. Shown here as the contract it fulfils and the manual fallback if the helper is unavailable:
 
 ```bash
-curl -s -X POST https://receipts.liminate.dev/save \
+curl -s -X POST https://liminate.dev/save \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $RECEIPTS_API_KEY" \
   -d '{"source": "<full contract text, JSON-escaped>", "label": "<session label>", "agent_id": "<model identifier>", "session_id": "<session identifier>", "parent_id": "<prior contract Receipts ID, or omit>"}' \
-  | python3 -c "import sys,json; print('https://receipts.liminate.dev' + json.load(sys.stdin)['contract']['permalink'])"
+  | python3 -c "import sys,json; print('https://liminate.dev/receipts' + json.load(sys.stdin)['contract']['permalink'])"
 ```
 
 **Save payload fields:**
@@ -69,9 +69,9 @@ curl -s -X POST https://receipts.liminate.dev/save \
 
 All three identity fields are nullable. Omitting them is safe — the contract saves without them. But including them is what makes the receipt answer "who generated this" (agent_id), "in which session" (session_id), and "inheriting from what" (parent_id). A contract without these fields is an orphan — inspectable but not traceable.
 
-`$RECEIPTS_API_KEY` is an environment variable the user sets up once. If the variable is not set, tell the user: "To save contracts to your account, generate an API key at receipts.liminate.dev/keys and run the setup command shown there."
+`$RECEIPTS_API_KEY` is an environment variable the user sets up once. If the variable is not set, tell the user: "To save contracts to your account, generate an API key at liminate.dev/keys and run the setup command shown there."
 
-Present the resulting permalink (e.g., `https://receipts.liminate.dev/c/a7x9k2Bf`).
+Present the resulting permalink (e.g., `https://liminate.dev/c/a7x9k2Bf`).
 
 **Classifier / permission note (Tier 2+).** Whether this call goes through depends on the host's permission mode. The behavior is mode-specific, not universal — do not assume every user must edit settings:
 
@@ -81,7 +81,7 @@ Present the resulting permalink (e.g., `https://receipts.liminate.dev/c/a7x9k2Bf
 If you hit the auto-mode denial, do **not** try to tunnel around it (wrapping the curl in a python script, a heredoc, or a test runner — the classifier flags that as an Auto-Mode Bypass and the user loses trust). Instead, tell the user to add a one-line allow rule scoped to this exact endpoint:
 
 ```json
-"Bash(curl -s * https://receipts.liminate.dev/* *)"
+"Bash(curl -s * https://liminate.dev/* *)"
 ```
 
 This single rule covers both the `POST /save` call and the
@@ -116,14 +116,14 @@ via `/permissions` or in their `settings.local.json` `allow` array, then restart
    if session_id: payload["session_id"] = session_id
    if parent_id: payload["parent_id"] = parent_id
    body = json.dumps(payload).encode()
-   req = urllib.request.Request("https://receipts.liminate.dev/save", data=body, method="POST")
+   req = urllib.request.Request("https://liminate.dev/save", data=body, method="POST")
    req.add_header("Content-Type", "application/json")
    req.add_header("Authorization", "Bearer " + (key or ""))
    try:
        with urllib.request.urlopen(req, timeout=30) as r:
            print("HTTP", r.status)
            data = json.loads(r.read().decode())
-           print("PERMALINK:", "https://receipts.liminate.dev" + data["contract"]["permalink"])
+           print("PERMALINK:", "https://liminate.dev/receipts" + data["contract"]["permalink"])
    except urllib.error.HTTPError as e:
        print("HTTP", e.code); print(e.read().decode())
    ```
@@ -132,7 +132,7 @@ via `/permissions` or in their `settings.local.json` `allow` array, then restart
 
 Avoid heredocs (`python3 - <<'PY' … PY`) for the user-run path — a paste that drops the closing delimiter leaves the shell hanging at a `heredoc>` prompt. A file the user runs by path is the robust path.
 
-`$RECEIPTS_API_KEY` is an environment variable the user sets up once. If the variable is not set, tell the user: "To save contracts to your account, generate an API key at receipts.liminate.dev/keys and run the setup command shown there."
+`$RECEIPTS_API_KEY` is an environment variable the user sets up once. If the variable is not set, tell the user: "To save contracts to your account, generate an API key at liminate.dev/keys and run the setup command shown there."
 
 **Do NOT generate fragment-encoded URLs (`#contract=<base64>`) for contracts longer than 5 lines.** The encoding is token-expensive, produces unwieldy URLs, and takes minutes to generate. Fragment URLs are acceptable only for very short demo contracts. For any real session contract, use `POST /save`.
 
@@ -163,7 +163,7 @@ is included, and the agent is the only one who can perform the lookup.
 2. Query the user's contract history:
 
    ```bash
-   curl -s https://receipts.liminate.dev/api/v1/export \
+   curl -s https://liminate.dev/api/v1/export \
      -H "Authorization: Bearer $RECEIPTS_API_KEY" \
      | python3 -c "
    import sys, json
@@ -182,7 +182,7 @@ is included, and the agent is the only one who can perform the lookup.
    prior contract first if its source is available:
 
    ```bash
-   curl -s -X POST https://receipts.liminate.dev/save \
+   curl -s -X POST https://liminate.dev/save \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer $RECEIPTS_API_KEY" \
      -d '{"source": "<prior contract text, JSON-escaped>", "label": "<prior session label>"}' \
@@ -193,7 +193,7 @@ is included, and the agent is the only one who can perform the lookup.
 
 **Tier 1 (conversation only):** If a permalink was generated in a
 prior session, extract the ID from the URL (e.g.,
-`receipts.liminate.dev/c/HW496KG7` → `HW496KG7`). If no permalink
+`liminate.dev/c/HW496KG7` → `HW496KG7`). If no permalink
 exists and the user cannot run the export query, the lineage link
 cannot be established — omit `parent_id`.
 

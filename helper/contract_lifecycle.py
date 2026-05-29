@@ -36,8 +36,8 @@ from pathlib import Path
 # Constants
 # --------------------------------------------------------------------------
 
-SAVE_URL = "https://receipts.liminate.dev/save"
-RECEIPTS_BASE = "https://receipts.liminate.dev"
+SAVE_URL = "https://liminate.dev/save"
+RECEIPTS_BASE = "https://liminate.dev"
 
 # Distinct exit code: an attended save reached the consent gate but no
 # explicit `--consent upload` was given. The caller (the model, in prose)
@@ -452,7 +452,7 @@ def _cmd_save(args) -> int:
         return 0
     if result["decision"] == UploadDecision.LOCAL_ONLY_NO_KEY.value:
         print("upload skipped: RECEIPTS_API_KEY not set — local-only. "
-              "Generate a key at receipts.liminate.dev/keys")
+              "Generate a key at liminate.dev/keys")
         return 0
     if result["needs_confirmation"]:
         extra = " (sensitive content detected)" if result["sensitive"] else ""

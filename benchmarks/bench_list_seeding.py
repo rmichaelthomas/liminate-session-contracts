@@ -31,7 +31,7 @@ import sys
 import urllib.request
 from typing import Any
 
-DEFAULT_ENDPOINT = "https://receipts.liminate.dev/save"
+DEFAULT_ENDPOINT = "https://liminate.dev/save"
 
 ADD_RE = re.compile(r'^\s*add\s+"[^"]*"\s+to\s+([a-zA-Z][\w-]*)', re.MULTILINE)
 REMEMBER_LIST_RE = re.compile(
