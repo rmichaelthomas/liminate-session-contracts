@@ -1,0 +1,18 @@
+{
+  "_comment": "Codex registration of the agent-agnostic session-start trigger contract. Install at ~/.codex/hooks.json (user layer) or <repo>/.codex/hooks.json (project layer); or translate to inline [[hooks.SessionStart]] in ~/.codex/config.toml. Replace <absolute-path-to-repo> with this repo's absolute path. The command points at the SAME trigger script Claude Code uses — only the registration format differs. The script resolves the canonical path via helper/contract_lifecycle.py and injects the open-contract rule; it never creates the contract file.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "<absolute-path-to-repo>/hooks/contract-session-init.sh",
+            "statusMessage": "Resolving session contract path",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

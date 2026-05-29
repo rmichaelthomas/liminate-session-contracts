@@ -15,9 +15,9 @@ printf '%s\n' "$out" | grep -q '"additionalContext"' && a=1 || a=0
 check "$a" 1 "emits additionalContext when session_id present"
 printf '%s\n' "$out" | grep -q 'abc123-def' && b=1 || b=0
 check "$b" 1 "additionalContext mentions the session_id"
-[ -d "$TMP/.claude/contracts" ] && c=1 || c=0
-check "$c" 1 "creates the contracts directory"
-[ -f "$TMP/.claude/contracts/abc123-def.limn" ] && d=1 || d=0
+[ -d "$TMP/.liminate/contracts" ] && c=1 || c=0
+check "$c" 1 "creates the contracts directory (via the helper)"
+[ -f "$TMP/.liminate/contracts/abc123-def.limn" ] && d=1 || d=0
 check "$d" 0 "does NOT create the contract file (trust model)"
 
 # Case B: session_id absent
@@ -39,7 +39,7 @@ EOF
 )
 [ -z "$out4" ] && g=1 || g=0
 check "$g" 1 "escape-id emits no output (fresh HOME)"
-[ ! -d "$TMP2/.claude/contracts" ] && h=1 || h=0
-check "$h" 1 "escape-id does NOT create contracts dir (guard precedes mkdir)"
+[ ! -d "$TMP2/.liminate/contracts" ] && h=1 || h=0
+check "$h" 1 "escape-id does NOT create contracts dir (guard precedes helper)"
 
 exit "$fail"

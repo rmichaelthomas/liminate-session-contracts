@@ -4,7 +4,36 @@
 
 This is step 2 of the [Session end](../SKILL.md#session-end) sequence in the core skill: after emitting the final contract (step 1) and before closing it (step 3), save it to the Receipts inspection surface and present the permalink. The two-channel protocol and vocabulary constraint in [`SKILL.md`](../SKILL.md) still govern everything here.
 
-## Generate a Receipts permalink
+## Invoke the helper — do not assemble the call by hand
+
+The save flow is owned by [`helper/contract_lifecycle.py`](../helper/contract_lifecycle.py)
+(see [`helper/README.md`](../helper/README.md)). **Invoke the helper; do not
+re-assemble the save logic in prose.** It persists the contract locally
+*always*, runs the sensitivity scan, applies the consent gate, and — only on
+the attended + explicit-consent path — POSTs to Receipts with the payload and
+`parent_id` lineage described below.
+
+```bash
+# unattended (default): persists locally, never uploads
+python3 helper/contract_lifecycle.py save --session-id "$sid" --from contract.limn
+
+# attended, with the human's explicit consent: persists AND uploads
+python3 helper/contract_lifecycle.py save --session-id "$sid" --from contract.limn \
+  --attended true --consent upload --label "design review · 2026-05-23" \
+  --agent-id "claude-opus-4-8" --parent-id "HW496KG7"
+```
+
+Without `--consent upload` an attended save stops at the consent gate (exit
+code 10, "needs confirmation") and uploads nothing — ask the user, then
+re-invoke with consent. The helper never calls `input()`, so it never blocks
+an unattended run.
+
+Everything below documents **what the helper does internally** — the Receipts
+payload contract, the lineage procedure, and the classifier behaviour — and
+serves as the manual fallback if the helper is unavailable. It is reference,
+not a second procedure to execute by hand.
+
+## Generate a Receipts permalink (reference: what the helper does internally)
 
 Save the contract to the Receipts inspection surface and present the permalink.
 
@@ -18,7 +47,7 @@ If no inheritance was used, omit `parent_id`. Do not skip this step —
 a contract that inherited decisions but ships without `parent_id` breaks
 the lineage chain.
 
-**Tier 2+ (bash/file tools available):** Call the Receipts API directly:
+**Tier 2+ (bash/file tools available):** the helper's `save --attended true --consent upload` makes exactly this call for you. Shown here as the contract it fulfils and the manual fallback if the helper is unavailable:
 
 ```bash
 curl -s -X POST https://receipts.liminate.dev/save \
@@ -65,7 +94,7 @@ simplest deterministic allow.
 
 via `/permissions` or in their `settings.local.json` `allow` array, then restart so permissions reload. An explicit allow rule is deterministic and bypasses the classifier; auto-mode is a model judgment that can change between sessions. The agent **cannot** add this rule itself — editing a permissions allow-list is a hard-blocked self-modification. Hand the rule to the user and let them apply it. (Verified live May 22, 2026: with the allow rule in place, the agent's direct `curl … /save` succeeds with no denial.) The allow rule only matters when running unattended — in interactive mode the user can skip it entirely and just approve the prompt. Note this classifier is Claude Code's; other agents (Codex, Cursor, …) have their own permission or sandbox policies and may prompt, block, or allow the call differently.
 
-**Tier 1 (conversation only, no tools), or whenever the user must run the save themselves:** Do **not** emit a multi-line `curl` for the user to paste. Pasting a wrapped `curl -d '{…}'` block out of chat markdown corrupts the JSON body — line-wrapping and leading indentation inject stray whitespace into the `source` string, the server rejects the malformed JSON and returns an error object with no `contract` key, and the permalink extractor crashes with `KeyError: 'contract'`. This is a real, observed failure (May 22, 2026). Instead, give the user a **single self-contained Python file to run**, which has no paste step to mangle:
+**Tier 1 (conversation only, no tools, or the helper cannot be invoked), or whenever the user must run the save themselves:** the consent gate still applies — only reach this fallback after the human has agreed to upload. Do **not** emit a multi-line `curl` for the user to paste. Pasting a wrapped `curl -d '{…}'` block out of chat markdown corrupts the JSON body — line-wrapping and leading indentation inject stray whitespace into the `source` string, the server rejects the malformed JSON and returns an error object with no `contract` key, and the permalink extractor crashes with `KeyError: 'contract'`. This is a real, observed failure (May 22, 2026). Instead, give the user a **single self-contained Python file to run**, which has no paste step to mangle:
 
 1. Emit the full contract as a fenced `limn` block (step 1 above).
 2. If you have file tools, write `save_receipt.py` to disk (file writes are not blocked by the classifier — only the network call is). Otherwise emit its contents in one fenced ```python block for the user to save. The script embeds the contract as a triple-quoted string, reads `RECEIPTS_API_KEY` from the environment, POSTs via `urllib`, and **prints the raw HTTP status and response body** before extracting the permalink — so a non-200 or a changed response shape is visible instead of crashing:
