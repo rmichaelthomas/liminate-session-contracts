@@ -63,14 +63,52 @@ extraction, when to omit) is the canonical copy in
 Run it at session end, not at session start — at start, you only need to
 *record* the prior contract's ID (if known) for later use.
 
-## From the template
+## Create the contract — the helper's `init`
 
-1. Read `references/session_contract_template.limn` for the starting shape.
-2. Copy it to a working location (disk at tier 2+, conversation at tier 1).
-3. Replace the template's example decisions/questions with the user's actual session goal.
-4. Set `source-state` and `claim-basis` honestly. The default `unscanned` / `none` is correct at the start of most sessions.
+Create the contract with the lifecycle helper
+([`helper/contract_lifecycle.py`](../helper/contract_lifecycle.py), see
+[`helper/README.md`](../helper/README.md)) rather than hand-copying the
+template:
 
-After that, every contract mutation flows through Channel 2 — the `limn` block at the end of each response.
+```bash
+# a bare contract from the template shape
+python3 helper/contract_lifecycle.py init --session-id "$sid"
+
+# populated from initial content (the populate-at-start handoff)
+python3 helper/contract_lifecycle.py init --session-id "$sid" --from initial.json
+```
+
+`init` writes the contract to the canonical path (see
+[Session persistence](#session-persistence--verification)), validates it
+through the interpreter, and — when content is supplied — populates the
+session's starting ground truth *before the first claim*.
+
+The initial content is **generic and source-agnostic**. It may come from a
+prior checkpoint, a pasted resume prompt, the
+`liminate-contract-inheritance` skill's preamble, or a hand-authored payload;
+the helper does not mandate any particular producer. A call with no payload
+yields a valid bare template contract. Payload shape (every field optional):
+
+```json
+{
+  "sources": [{"name": "spec-doc", "text": "verbatim excerpt the contract can cite later"}],
+  "decisions": ["locked-decision-slug"],
+  "open_questions": ["unresolved-question-slug"],
+  "resume_state": "one-line state carried forward"
+}
+```
+
+This is how the session-1 delta — the most important delta in the session —
+is guaranteed when content is provided: every source, decision, and question
+in the payload lands in the contract, or `init` errors rather than silently
+dropping it. After `init`, every further contract mutation flows through
+Channel 2 — the `limn` block at the end of each response.
+
+## The template shape (what `init` builds from)
+
+1. Read `references/session_contract_template.limn` for the starting shape — it is what the helper's `init` renders.
+2. The bare `init` declares the standard lists and sets `source-state` / `claim-basis` to the honest defaults (`unscanned` / `none`), correct at the start of most sessions.
+3. Provide a `--from` payload to replace the placeholder content with the user's actual sources, decisions, and questions.
 
 ## Session persistence & verification
 
@@ -79,8 +117,11 @@ persisted to a stable, session-keyed path so an external process (a Claude
 Code statusline) can verify a contract is open.
 
 The `hooks/contract-session-init.sh` SessionStart hook injects your
-`session_id` and the keyed path `~/.claude/contracts/<session_id>.limn` into
-context at session start. When you open a contract, **write the full contract
+`session_id` and the keyed contract path into context at session start. That
+path is resolved by the helper (`helper/contract_lifecycle.py path
+--session-id <id>`) — canonically `~/.liminate/contracts/<session_id>.limn`,
+or wherever `$LIMINATE_CONTRACTS_DIR` / `$XDG_DATA_HOME` redirect it, but never
+inside a git working tree. When you open a contract, **write the full contract
 to that path**, and **rewrite it on every Channel-2 delta** so the file always
 holds the live contract. This single file:
 
@@ -94,9 +135,9 @@ The hook deliberately does not create it. File present ⟺ a contract was
 opened this session — that is what makes the statusline indicator honest. Do
 not pre-create or touch the file to make the indicator turn green.
 
-Contract files accumulate in `~/.claude/contracts/`. This is intentional —
-inheritance reads prior files. Clean them up manually when desired; there is
-no automatic pruner.
+Contract files accumulate in the canonical contracts directory
+(`~/.liminate/contracts/` by default). This is intentional — inheritance reads
+prior files. Clean them up manually when desired; there is no automatic pruner.
 
 ## Install — hook & statusline
 

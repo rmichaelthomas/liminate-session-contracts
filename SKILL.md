@@ -107,9 +107,9 @@ At session end, do four things in order:
    remember a list called session-corrections with "none"
    ```
 
-2. **Sensitivity check before saving.** Before saving to Receipts, scan the contract for `remember a source called` and `remember a claim called` statements. If any quoted content could contain sensitive material — proprietary code, financial data, customer information, medical records, credentials, or internal documents — ask the user: "This contract contains source excerpts that may be sensitive. Save to Receipts, or keep local-only?" If the user chooses local-only, skip the Receipts save, present the final contract as a copyable `limn` block, and note that it can be run locally with `liminate contract.limn --pack references/session_pack.json`. See [docs/TRUST-BOUNDARY.md](docs/TRUST-BOUNDARY.md) for the full data-flow description and [docs/LOCAL-ONLY.md](docs/LOCAL-ONLY.md) for the local-only walkthrough.
+2. **Save via the helper.** Call `helper/contract_lifecycle.py save` — it persists the contract locally always, and uploads to Receipts only with a present human's explicit consent. See [`helper/README.md`](helper/README.md) for the CLI. The helper runs the sensitivity scan (`remember a source called` / `remember a claim called`) internally and applies the consent gate as code: unattended, it stays local-only and never sends a credential; attended, it stops at a "needs confirmation" signal until you pass `--consent upload`. When it returns that signal — or whenever the scan flags potentially sensitive material (proprietary code, financial data, customer information, medical records, credentials, internal documents) — ask the user: "This contract may contain sensitive excerpts. Upload to Receipts, or keep local-only?" Re-invoke with `--attended true --consent upload` only if they agree; otherwise the local copy is the record, runnable with `liminate <path> --pack references/session_pack.json`. See [docs/TRUST-BOUNDARY.md](docs/TRUST-BOUNDARY.md) and [docs/LOCAL-ONLY.md](docs/LOCAL-ONLY.md) for the data-flow and local-only walkthroughs.
 
-3. **Save to Receipts and present the permalink.** See [`references/save-procedure.md`](references/save-procedure.md) for the full save protocol — including `parent_id` resolution, the save payload fields, the Tier 2+ direct `curl`, classifier/permission handling, and the Tier 1 / user-run `save_receipt.py` fallback.
+3. **Present the result.** The helper prints the local path always and a Receipts permalink only when an upload actually happened. Present whichever it returns. See [`references/save-procedure.md`](references/save-procedure.md) for the Receipts payload reference and the `parent_id`/lineage procedure the helper applies internally.
 
 4. **Close the contract.** After emitting the final contract and the permalink (or the local-only alternative), the contract is closed. Do not emit any further `limn` delta blocks in this conversation. If the user continues talking after session end (follow-up questions, corrections, new tasks), respond normally in prose but do not append to the contract. The contract is a record of the session that ended — not a living document that grows indefinitely.
 
@@ -120,8 +120,31 @@ The skill runs at whatever tier the host supports. Higher tiers add enforcement;
 | Tier | What's available | Behavior |
 |------|------------------|----------|
 | 1 | Conversation only | Emit the contract delta as a `limn` code block in each response. User can copy/paste to run later. |
-| 2 | File tools + Liminate installed (`pip install liminate`) | Write the full contract to `~/.claude/contracts/<session_id>.limn` (the session_id supplied by the SessionStart hook) on open, and rewrite it on every delta. After emitting each delta, run the file through `liminate` and fix parse errors before continuing. See [`references/starting-a-contract.md`](references/starting-a-contract.md) for session persistence & verification. |
+| 2 | File tools + Liminate installed (`pip install liminate`) | Resolve the canonical contract path with `helper/contract_lifecycle.py path` (never the repo working tree), write the full contract there on open, and rewrite it on every delta. The helper's `init`/`save` operations also validate the contract through `liminate` for you. See [`references/starting-a-contract.md`](references/starting-a-contract.md) for session persistence & verification. |
 | 3 | Persistent storage + session pack | Load the session pack (`liminate --pack references/session_pack.json …`). Use `cite` and `verify` from the pack. Persist the contract across sessions so prior decisions inform later ones. |
+
+## Contract lifecycle helper
+
+Contract-lifecycle correctness — *where* a contract is written, *how* it is
+persisted, and *whether* it is uploaded — lives in one host-agnostic
+executable, [`helper/contract_lifecycle.py`](helper/contract_lifecycle.py)
+(see [`helper/README.md`](helper/README.md)), not in prose the model executes
+by hand. It exposes three operations:
+
+- **`path`** — resolve the canonical contract path (`$LIMINATE_CONTRACTS_DIR`
+  > `$XDG_DATA_HOME/liminate/contracts` > `$HOME/.liminate/contracts`), never
+  inside a git working tree.
+- **`init`** — create the contract from initial content (sources, decisions,
+  open questions) or a bare template, validated through the interpreter.
+- **`save`** — persist locally always; upload to Receipts only when a human
+  is present and gives explicit consent.
+
+The helper is the universal floor: it runs identically on every host and
+non-agent caller. Hooks are the silent-invocation layer for hosts that have
+them; this SKILL is the discoverability layer for hosts that don't (read it,
+call the helper). Every per-host variation degrades safe — no consent signal
+means local-only, no session id means the helper generates one, no hook means
+you invoke the helper directly.
 
 ## Vocabulary constraint (critical)
 
