@@ -1,13 +1,20 @@
 #!/bin/sh
-# SessionStart hook for liminate-session-contracts — a thin trigger.
+# Agent-agnostic SessionStart trigger for liminate-session-contracts.
 #
-# Path resolution and contracts-directory creation are delegated to the
-# host-agnostic helper (helper/contract_lifecycle.py), so there is exactly
-# one copy of that logic. This hook only injects the agent's session_id and
-# the keyed contract path (resolved by the helper) plus the write-on-open
-# rule. It deliberately does NOT create the contract file — its presence is
-# how the statusline verifies a contract is loaded, so the file must appear
-# only when the agent genuinely opens a contract.
+# This is the one trigger script; each hook-capable agent registers it in its
+# own config format (Claude Code: ~/.claude/settings.json; Codex:
+# ~/.codex/hooks.json or [[hooks.SessionStart]] in config.toml — see
+# hooks/codex.hooks.json). Its I/O is the shape both use: a `session_id` on
+# stdin JSON in, `hookSpecificOutput.additionalContext` out — so the same
+# script backs every such agent and supporting a new one is just a
+# registration, never a script or helper change.
+#
+# It fulfils the trigger contract: (1) take the session_id from the host,
+# (2) resolve the canonical path via the host-agnostic helper
+# (helper/contract_lifecycle.py — the single owner of path/dir logic), and
+# (3) inject the write-on-open rule. It deliberately does NOT create the
+# contract file — its presence is how the statusline verifies a contract is
+# loaded, so the file must appear only when the agent genuinely opens one.
 set -eu
 
 input=$(cat)
