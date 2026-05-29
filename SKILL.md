@@ -146,6 +146,58 @@ call the helper). Every per-host variation degrades safe — no consent signal
 means local-only, no session id means the helper generates one, no hook means
 you invoke the helper directly.
 
+### Session-start triggers — one contract, many registrations
+
+A *trigger* is the thin per-agent front door that invokes the helper at
+session start. There is **one trigger contract**; each agent registers it in
+its own config format. Supporting a new agent is one small registration
+against this contract — never a change to the helper or the trigger script.
+
+**The trigger contract.** A session-start trigger, in whatever form the host
+supports, MUST:
+
+1. Obtain the `session_id` from the host — or omit it and let the helper
+   generate (and print) one.
+2. Resolve the canonical path:
+   `python3 <repo>/helper/contract_lifecycle.py path --session-id <id>`.
+3. Inject the open-contract rule into the agent's context: write the full
+   contract to that path on open, rewrite it on every Channel-2 delta, and do
+   **not** create the file unless a contract is genuinely opened (its presence
+   is the statusline's proof).
+
+It MUST NOT create the contract file and MUST NOT re-implement path or
+directory logic — the helper owns that.
+
+**The shared trigger script.** `hooks/contract-session-init.sh` implements the
+contract. Its I/O is agent-neutral: it reads `session_id` from a stdin JSON
+field and emits `hookSpecificOutput.additionalContext` — the shape Claude Code
+and Codex both use — so the *same script* backs every hook-capable agent. Only
+the registration differs:
+
+- **Claude Code** — in `~/.claude/settings.json`:
+
+  ```json
+  "hooks": { "SessionStart": [ { "hooks": [ { "type": "command", "command": "<repo>/hooks/contract-session-init.sh" } ] } ] }
+  ```
+
+- **Codex** — in `~/.codex/hooks.json` (or inline `[[hooks.SessionStart]]` in
+  `~/.codex/config.toml`); a ready example ships at
+  [`hooks/codex.hooks.json`](hooks/codex.hooks.json):
+
+  ```json
+  { "hooks": { "SessionStart": [ { "matcher": "startup|resume", "hooks": [ { "type": "command", "command": "<repo>/hooks/contract-session-init.sh" } ] } ] } }
+  ```
+
+- **Any other hook-capable agent** registers the same trigger in its own config
+  format, pointing at the same script — or, if its hook I/O differs from the
+  `session_id`-in / `additionalContext`-out shape, at a thin shim that adapts
+  the I/O and still calls the helper.
+
+**Agents without hooks — the universal fallback.** The instruction file
+(`CLAUDE.md`, `AGENTS.md`, or the host's equivalent) directs the agent to run
+the helper itself at session start. This SKILL is that discoverability layer.
+No hook is required; correctness still holds because the helper is the floor.
+
 ## Vocabulary constraint (critical)
 
 Liminate has 58 reserved words (21 verbs, 22 connectives, 8 operators, 3 articles, 3 multi-word reserved, 1 declaration). See `references/vocabulary_quick_reference.md` for the full list. The contract must use only:

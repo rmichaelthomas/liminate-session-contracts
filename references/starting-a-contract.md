@@ -155,6 +155,11 @@ Two optional pieces make persistence and verification automatic:
    ```
 
    Use the absolute path to this skill's `hooks/contract-session-init.sh`.
+   This is Claude Code's registration of the agent-agnostic trigger
+   contract; other hook-capable agents register the same script in their own
+   config format (Codex: [`hooks/codex.hooks.json`](../hooks/codex.hooks.json)).
+   See [Session-start triggers — one contract, many registrations](../SKILL.md#session-start-triggers--one-contract-many-registrations)
+   for the full contract and the hookless instruction-file fallback.
 
 2. **Statusline.** See [`references/statusline.md`](statusline.md)
    for the command block and what it renders (`contract: <id>` /
