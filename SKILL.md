@@ -207,7 +207,7 @@ Liminate has 58 reserved words (21 verbs, 22 connectives, 8 operators, 3 article
 - A quoted string (e.g. `"unscanned"`)
 - A number
 
-When the session pack is loaded (`--pack references/session_pack.json`), 6 additional words are reserved: 3 nouns (`claim`, `source`, `decision`) and 3 verbs (`cite`, `verify`, `measure`).
+When the session pack is loaded (`--pack references/session_pack.json`), 7 additional words are reserved: 3 nouns (`claim`, `source`, `decision`) and 4 verbs (`cite`, `verify`, `measure`, `fit`).
 
 Do not invent verbs or connectives. If you reach for a word that is not in the vocabulary, restructure the sentence using the vocabulary that exists.
 
@@ -222,7 +222,7 @@ Two words are especially relevant for contract inheritance:
   is not found. Used for clean decision reversal instead of adding
   contradicting items.
 
-## Session pack — `cite`, `verify`, and `measure`
+## Session pack — `cite`, `verify`, `measure`, and `fit`
 
 `references/session_pack.json` is loadable today against the Liminate interpreter:
 
@@ -230,7 +230,7 @@ Two words are especially relevant for contract inheritance:
 liminate --pack references/session_pack.json examples/research_contract.limn
 ```
 
-The pack adds 6 words (3 nouns + 3 verbs):
+The pack adds 7 words (3 nouns + 4 verbs):
 
 - **`claim`** (noun) — descriptor for assertions awaiting verification
 - **`source`** (noun) — descriptor for primary sources
@@ -238,6 +238,7 @@ The pack adds 6 words (3 nouns + 3 verbs):
 - **`cite <text> from <source>`** (verb) — substring check, errors if the text is not found in the source. The model does not check — the interpreter does.
 - **`verify <claim> from <source>`** (verb) — structural comparison. Flags `verification-status` (`match` / `mismatch`) and `verification-divergences` (the diff). Does not error on mismatch — surfaces it for inspection.
 - **`measure <number> from <source> within <tolerance>`** (verb) — numeric proximity check. Extracts all numbers from the source string, finds the closest to the claimed value, checks whether the delta is within tolerance. Flags `measure-status` (`within_tolerance` / `outside_tolerance` / `no_numbers_found`), `measure-matched` (the closest number found), and `measure-delta` (the absolute difference). Does not error on mismatch — surfaces it for inspection. Use alongside `cite` to distinguish precision noise (cite fails, measure passes) from genuine errors (both fail).
+- **`fit <record> to <shape>`** (verb) — Level 2 conformance check. Every field the `shape` declares must be present on the `record` with a matching scalar type; extra fields are allowed. Flags `fit-status` (`match` / `mismatch`), `fit-missing` (declared fields absent from the record), `fit-type-mismatch` (present but wrong scalar type), and `fit-extra` (record fields beyond the shape). Does not error on mismatch — surfaces it as `PACK_VERB_FAILURE` with `failure_type` `conformance_mismatch` for inspection. (Added in session pack v0.4.0.)
 
 Usage example (entire example is one Channel-2 emission):
 
@@ -268,7 +269,7 @@ Supporting reference material:
 
 - `references/session_contract_template.limn` — starting template that parses and runs against the Liminate interpreter.
 - `references/vocabulary_quick_reference.md` — the 58-word vocabulary.
-- `references/session_pack.json` — loadable session pack (`claim`, `source`, `decision`, `cite`, `verify`, `measure`).
+- `references/session_pack.json` — loadable session pack (`claim`, `source`, `decision`, `cite`, `verify`, `measure`, `fit`).
 - `references/statusline.md` — the statusline command block and what it renders.
 - `examples/design_session_contract.limn` — full contract for an architectural design session.
 - `examples/code_review_contract.limn` — full contract for a code review session.
