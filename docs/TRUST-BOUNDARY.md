@@ -173,7 +173,7 @@ This section names capabilities that a Fortune 500 security review would expect 
 
 ## Version contract
 
-The Receipts server records `liminate_version` and `pack_version` on every saved contract. A contract saved today against interpreter v0.10.0 and session pack v0.3.0 can be replayed against those same versions in the future to produce identical results. The interpreter is deterministic — no randomness, no model calls, no external state.
+The Receipts server records `liminate_version` and `pack_version` on every saved contract. A contract saved today against interpreter v0.14.0 and session pack v0.4.0 can be replayed against those same versions in the future to produce identical results. The interpreter is deterministic — no randomness, no model calls, no external state.
 
 **What is guaranteed:** Given the same interpreter version, pack version, and contract source, the output is identical.
 
@@ -181,4 +181,4 @@ The Receipts server records `liminate_version` and `pack_version` on every saved
 
 ---
 
-*This document describes the system as deployed on May 23, 2026 (then served at `receipts.liminate.dev`, since consolidated to `liminate.dev`). Interpreter version: 0.10.0. Session pack version: 0.3.0. Receipts API version: 0.3.0.*
+*This document describes the system as of June 5, 2026, served at `liminate.dev` (previously `receipts.liminate.dev`, since consolidated). Interpreter version: 0.14.0. Session pack version: 0.4.0. Receipts API version: 0.3.0.*
