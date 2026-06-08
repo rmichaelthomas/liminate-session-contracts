@@ -39,7 +39,9 @@ User triggers: "start a contract", "session state", "what have you verified", "c
 
 ## How to operate — two-channel protocol
 
-The contract lives on a **separate channel** from your prose response. This is the load-bearing rule of the v2 skill: prose answers the user; contract mutations live in a fenced `limn` code block. Mixing the two — narrating contract updates inside the answer — is what the v1 skill got wrong, and what produced fabrication regressions on Sonnet 4.6 in earlier benchmark rounds. Do not narrate the contract in prose.
+The contract lives on a **separate channel** from your prose response. This is the load-bearing rule of the v2 skill: prose answers the user; contract mutations live in a fenced `limn` code block. Do not narrate the contract in prose.
+
+> Rationale for this rule: see [docs/RATIONALE.md](docs/RATIONALE.md#two-channel-history).
 
 ### Channel 1 — Prose response
 
@@ -139,12 +141,7 @@ by hand. It exposes three operations:
 - **`save`** — persist locally always; upload to Receipts only when a human
   is present and gives explicit consent.
 
-The helper is the universal floor: it runs identically on every host and
-non-agent caller. Hooks are the silent-invocation layer for hosts that have
-them; this SKILL is the discoverability layer for hosts that don't (read it,
-call the helper). Every per-host variation degrades safe — no consent signal
-means local-only, no session id means the helper generates one, no hook means
-you invoke the helper directly.
+> Rationale for the helper's role as universal floor: see [docs/RATIONALE.md](docs/RATIONALE.md#universal-floor).
 
 ### Session-start triggers — one contract, many registrations
 
@@ -289,7 +286,4 @@ The inspection surface checks `cite` statements by running them through the Limi
 
 ## What this skill is not
 
-- Not a memory system — but contracts can carry forward. Use the host platform's memory for transient persistence; the contract is a *per-session* artifact. However, with the `liminate-contract-inheritance` skill, locked decisions, corrections, and verified claims from prior sessions can be inherited as an executable preamble for the next session. The contract chain becomes the institutional memory; the inheritance skill makes it continuous.
-- Not a planning tool. The contract records *what was verified*, not *what to do next*.
-- Not a substitute for actually reading sources. A contract with `source-state: verified` is only honest if the source was actually read — and a `cite` is only honest if the substring is actually in the source.
-- Not a personality layer. Session corrections are about engagement posture (depth, pace, directness), not about tone, humor, or formality. The corrections are operational, not aesthetic.
+> The skill's positioning — what it is not, and why — lives in [docs/RATIONALE.md](docs/RATIONALE.md#what-this-skill-is-not).
