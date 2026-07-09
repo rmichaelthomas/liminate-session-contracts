@@ -197,9 +197,9 @@ No hook is required; correctness still holds because the helper is the floor.
 
 ## Vocabulary constraint (critical)
 
-Liminate has 58 reserved words (21 verbs, 22 connectives, 8 operators, 3 articles, 3 multi-word reserved, 1 declaration). See `references/vocabulary_quick_reference.md` for the full list. The contract must use only:
+Liminate has 61 reserved words (21 verbs, 22 connectives, 10 operators, 3 articles, 3 multi-word reserved, 2 declarations). See `references/vocabulary_quick_reference.md` for the full list. The contract must use only:
 
-- One of the 58 reserved words
+- One of the 61 reserved words
 - A user-defined hyphenated name (e.g. `tracked-decisions`)
 - A quoted string (e.g. `"unscanned"`)
 - A number
