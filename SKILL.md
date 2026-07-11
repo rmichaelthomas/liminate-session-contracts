@@ -12,7 +12,7 @@ description: >-
 
 # Session contracts
 
-A session contract is a small, inspectable record of *what you have actually verified* during a working session versus *what you are inferring*. It lives as a `.limn` file (Liminate, a 58-word prose-as-syntax language) so the contract is both human-readable and machine-checkable.
+A session contract is a small, inspectable record of *what you have actually verified* during a working session versus *what you are inferring*. It lives as a `.limn` file (Liminate, a 61-word prose-as-syntax language) so the contract is both human-readable and machine-checkable.
 
 The contract tracks:
 
@@ -58,7 +58,7 @@ Format:
 
 ```limn
 remember a source called repo-readme with "the text that was actually read"
-cite "58 reserved words" from repo-readme
+cite "61 reserved words" from repo-readme
 add "decision-bounded-vocabulary" to tracked-decisions
 remember a string called claim-basis with "verified"
 ```
@@ -240,10 +240,10 @@ The pack adds 7 words (3 nouns + 4 verbs):
 Usage example (entire example is one Channel-2 emission):
 
 ```
-remember a source called readme with "Liminate has 58 reserved words."
-remember a claim called counted-claim with "Liminate has 58 reserved words."
+remember a source called readme with "Liminate has 61 reserved words."
+remember a claim called counted-claim with "Liminate has 61 reserved words."
 
-cite "58 reserved words" from readme
+cite "61 reserved words" from readme
 verify counted-claim from readme
 
 when verification-status is equal to "mismatch"
@@ -265,7 +265,7 @@ On-demand procedures — read the matching file when its situation arises:
 Supporting reference material:
 
 - `references/session_contract_template.limn` — starting template that parses and runs against the Liminate interpreter.
-- `references/vocabulary_quick_reference.md` — the 58-word vocabulary.
+- `references/vocabulary_quick_reference.md` — the 61-word vocabulary.
 - `references/session_pack.json` — loadable session pack (`claim`, `source`, `decision`, `cite`, `verify`, `measure`, `fit`).
 - `references/statusline.md` — the statusline command block and what it renders.
 - `examples/design_session_contract.limn` — full contract for an architectural design session.

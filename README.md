@@ -83,7 +83,7 @@ The contracts this skill produces can be scanned at [liminate.dev/receipts](http
 
 ### The session pack
 
-The session pack adds 6 domain words to Liminate's 58-word base vocabulary:
+The session pack adds 7 domain words to Liminate's 61-word base vocabulary:
 
 | Word | Type | What it does |
 |---|---|---|
@@ -93,6 +93,7 @@ The session pack adds 6 domain words to Liminate's 58-word base vocabulary:
 | `cite` | verb | `cite <text> from <source>` — runtime substring check, errors if the text isn't in the source |
 | `verify` | verb | `verify <claim> from <source>` — structural comparison, flags match/mismatch with divergence details |
 | `measure` | verb | `measure <number> from <source> within <tolerance>` — numeric proximity check; flags `measure-status`, `measure-matched`, `measure-delta` |
+| `fit` | verb | `fit <record> to <shape>` — Level 2 conformance check; flags `fit-status`, `fit-missing`, `fit-type-mismatch`, `fit-extra` |
 
 `cite` is the constraining primitive. The Liminate interpreter gate was active on 101 of the benchmarked turns. It never fired. The models prefer to omit a citation rather than fabricate one. The gate is a working safety net waiting for the case the instruction fails to prevent.
 
