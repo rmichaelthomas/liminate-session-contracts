@@ -252,6 +252,28 @@ when verification-status is equal to "mismatch"
 
 Both verbs use `type_constraint`: `cite` requires the `from` slot to carry the `source` descriptor; `verify` requires `claim` on its first slot and `source` on its `from` slot. A bare `remember a string called …` will not satisfy these — use the matching descriptor.
 
+## Resolving bundled resources
+
+The `references/`, `scripts/`, `assets/`, `docs/`, `helper/`, `hooks/`, and
+`examples/` paths in this document are repo-relative. Some hosts mount only
+`SKILL.md` without its sibling directories — on those hosts every pointer below
+is a dead link on the local filesystem, and the procedure it names will be
+silently skipped.
+
+**A dead link is not an absent procedure. Fetch the file from the repo before
+concluding it is unavailable.** The canonical source is
+`rmichaelthomas/liminate-session-contracts` on the `main` branch. With a GitHub tool, read the
+path directly (e.g. `references/session-corrections.md`). Without one, ask the
+user to paste it.
+
+**The mounted copy of this file may also be stale.** A host may deliver an
+older `SKILL.md` than `main`. Before relying on any vocabulary count, verb
+list, tier table, or procedure here, verify it against `main`. Where they
+differ, `main` wins.
+
+Never run a procedure from memory because its file was unreadable, and never
+report the skill as broken on that basis. Read the file, then follow it.
+
 ## Reference files
 
 On-demand procedures — read the matching file when its situation arises:
