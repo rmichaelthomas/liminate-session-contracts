@@ -24,7 +24,7 @@ The headline metric is **fabrication rate on unanswerable tasks** (lower is bett
 
 ```bash
 pip install anthropic
-export ANTHROPIC_API_KEY=...
+echo 'ANTHROPIC_API_KEY=...' > ../.env   # repo-root .env, gitignored
 ```
 
 ## Run

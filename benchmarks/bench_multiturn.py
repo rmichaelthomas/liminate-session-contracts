@@ -23,6 +23,10 @@ from typing import Literal
 
 import anthropic
 
+from _env import load_env
+
+load_env()  # ANTHROPIC_API_KEY from the repo-root .env
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL_MD = (REPO_ROOT / "SKILL.md").read_text()
 SCENARIOS = json.loads((Path(__file__).parent / "scenarios-multiturn.json").read_text())["scenarios"]

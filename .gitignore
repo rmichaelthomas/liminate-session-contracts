@@ -6,3 +6,6 @@ __pycache__/
 results.jsonl
 results-*.jsonl
 _accumulated_tmp.limn
+
+# Local secrets (ANTHROPIC_API_KEY for benchmarks/)
+.env

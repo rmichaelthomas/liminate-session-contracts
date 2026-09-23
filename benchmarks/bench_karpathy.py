@@ -17,7 +17,7 @@ Failure-mode buckets and judge rubrics are LOCKED:
 Output: JSONL with one row per (task, condition) and a comparison table.
 
 Usage:
-    export ANTHROPIC_API_KEY=...
+    ANTHROPIC_API_KEY in the repo-root .env (or the environment)
     python bench_karpathy.py                    # all 8 tasks x 3 conditions
     python bench_karpathy.py --condition karpathy --task 2a
     python bench_karpathy.py --model claude-sonnet-4-6 --judge-model claude-opus-4-7
@@ -39,6 +39,10 @@ from pathlib import Path
 from typing import Any
 
 import anthropic
+
+from _env import load_env
+
+load_env()  # ANTHROPIC_API_KEY from the repo-root .env
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "karpathy"

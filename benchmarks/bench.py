@@ -20,7 +20,7 @@ Token usage is captured per call. SKILL.md is sent as a cacheable system block
 so the second-and-later skill calls hit the cache.
 
 Usage:
-    export ANTHROPIC_API_KEY=...
+    ANTHROPIC_API_KEY in the repo-root .env (or the environment)
     python bench.py                 # default: 12 tasks x 3 runs x 2 conditions
     python bench.py --runs 1        # quick smoke test
     python bench.py --model claude-sonnet-4-6
@@ -43,6 +43,10 @@ from pathlib import Path
 from typing import Literal
 
 import anthropic
+
+from _env import load_env
+
+load_env()  # ANTHROPIC_API_KEY from the repo-root .env
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL_MD = (REPO_ROOT / "SKILL.md").read_text()

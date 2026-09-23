@@ -31,7 +31,7 @@ to check fidelity (parse errors, count of `cite` / `verify` / `add` /
 skipped.
 
 Usage:
-    export ANTHROPIC_API_KEY=...
+    ANTHROPIC_API_KEY in the repo-root .env (or the environment)
     python bench_continuity.py
     python bench_continuity.py --model claude-sonnet-4-6 --judge-model claude-opus-4-7
     python bench_continuity.py --runs 1                     # smoke test
@@ -54,6 +54,10 @@ from pathlib import Path
 from typing import Literal
 
 import anthropic
+
+from _env import load_env
+
+load_env()  # ANTHROPIC_API_KEY from the repo-root .env
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL_MD = (REPO_ROOT / "SKILL.md").read_text()
